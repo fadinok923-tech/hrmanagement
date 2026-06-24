@@ -1,31 +1,11 @@
-'use client'
+import { BrandPanel } from "@/components/brand-panel";
+import { LoginPanel } from "@/components/login-panel";
 
 export default function Home() {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      gap: '2rem',
-      padding: '1rem'
-    }}>
-      <div style={{
-        position: 'relative',
-        width: '6rem',
-        height: '6rem'
-      }}>
-        <img
-          src="/logo.svg"
-          alt="Z.ai Logo"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain'
-          }}
-        />
-      </div>
+    <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[5fr_6fr] xl:grid-cols-[2fr_3fr]">
+      <BrandPanel />
+      <LoginPanel />
     </div>
-  )
+  );
 }

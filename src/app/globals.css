@@ -7,6 +7,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
+  --font-arabic: var(--font-cairo);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -41,6 +42,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Tanoor brand palette */
+  --color-brand-deep: #1e3a8a;
+  --color-brand-deeper: #172f6e;
+  --color-brand-card: #1e40af;
+  --color-brand-light: #3b82f6;
+  --color-brand-logo: #60a5fa;
+  --color-gold: #f59e0b;
+  --color-gold-deep: #d97706;
+  --color-gold-soft: #fde68a;
 }
 
 :root {
@@ -119,4 +130,86 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* RTL / Arabic typography */
+html[dir="rtl"] body {
+  font-family: var(--font-cairo), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Decorative grid + glow for the left brand panel */
+.brand-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.brand-glow {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(96, 165, 250, 0.28), transparent 42%),
+    radial-gradient(circle at 85% 80%, rgba(245, 158, 11, 0.18), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(30, 64, 175, 0.35), transparent 60%);
+}
+
+/* Animated gradient sheen on the brand panel */
+.brand-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent 100%
+  );
+  background-size: 250% 100%;
+  animation: sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sheen {
+  0%, 100% { background-position: 150% 0; }
+  50% { background-position: -50% 0; }
+}
+
+/* Floating portal orbs animation */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-8px) translateX(2px); }
+}
+.float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+/* Pulse ring for compliance dot */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.pulse-ring { animation: pulse-ring 2.4s ease-out infinite; }
+
+/* Custom scrollbar */
+.tanoor-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.tanoor-scroll::-webkit-scrollbar-track { background: transparent; }
+.tanoor-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+}
+.tanoor-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Subtle shimmer for the gold accent line */
+@keyframes gold-shimmer {
+  0%, 100% { opacity: 0.85; transform: scaleX(0.9); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+.gold-shimmer { animation: gold-shimmer 3.2s ease-in-out infinite; }
+
+/* Input focus ring matching brand */
+.tanoor-input:focus {
+  border-color: var(--color-brand-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
 }
