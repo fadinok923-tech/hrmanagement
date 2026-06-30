@@ -33,7 +33,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar onLogout={onLogout} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
-      <div className="lg:ps-72">
+      <div className="lg:ps-64">
         {/* Mobile top bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden">
           <button
