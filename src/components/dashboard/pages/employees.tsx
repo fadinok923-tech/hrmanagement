@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo, type FormEvent } from "react";
+import { useEffect, useState, useMemo, useRef, type FormEvent } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import {
-  Plus, Search, Download, Upload, Pencil, Trash2, IdCard, BookUser, Sparkles, Loader2, Grid3x3, List, X,
+  Plus, Search, Download, Upload, Pencil, Trash2, IdCard, BookUser, Sparkles, Loader2, Grid3x3, List, X, FileSpreadsheet,
 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { PageHeader, FilterSelect, StatCard, ModalShell, StatusBadge, EmptyState } from "../shared";
@@ -601,70 +602,276 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
 function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: () => void; onImported: () => void }) {
   const { t } = useLanguage();
-  const [csv, setCsv] = useState("");
   const [loading, setLoading] = useState(false);
+  const [parsedRows, setParsedRows] = useState<any[]>([]);
+  const [fileName, setFileName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  async function handleImport() {
-    if (!csv.trim()) return;
-    setLoading(true);
+  // Column definitions for the template
+  const TEMPLATE_COLUMNS = [
+    "empNo", "name", "arabicName", "nationality", "gender", "maritalStatus",
+    "dob", "phone", "email", "address", "emergencyContact",
+    "iqamaNo", "passportNo", "sponsor", "visaType", "bankIban",
+    "jobTitle", "department", "hireDate", "basicSalary", "allowances",
+  ];
+
+  // Download a sample Excel template
+  function downloadTemplate() {
+    const sampleData = [
+      {
+        empNo: "TAJ-100",
+        name: "Ahmed Mohammed Ali",
+        arabicName: "أحمد محمد علي",
+        nationality: "Saudi",
+        gender: "male",
+        maritalStatus: "single",
+        dob: "1990-05-15",
+        phone: "0501234567",
+        email: "ahmed@tanoor.sa",
+        address: "Riyadh, Saudi Arabia",
+        emergencyContact: "0509876543",
+        iqamaNo: "2001234567",
+        passportNo: "A12345678",
+        sponsor: "Tanoor Al Jazeera",
+        visaType: "Saudi National",
+        bankIban: "SA0380000000608012345678",
+        jobTitle: "Production Operator",
+        department: "Production",
+        hireDate: "2024-01-15",
+        basicSalary: 3500,
+        allowances: 500,
+      },
+      {
+        empNo: "TAJ-101",
+        name: "Rajesh Kumar Sharma",
+        arabicName: "",
+        nationality: "Indian",
+        gender: "male",
+        maritalStatus: "married",
+        dob: "1988-03-20",
+        phone: "0534567890",
+        email: "rajesh@tanoor.sa",
+        address: "Dammam, Saudi Arabia",
+        emergencyContact: "0556789012",
+        iqamaNo: "2987654321",
+        passportNo: "P87654321",
+        sponsor: "Tanoor Al Jazeera",
+        visaType: "Iqama",
+        bankIban: "SA0380000000608098765432",
+        jobTitle: "Quality Inspector",
+        department: "Quality Control",
+        hireDate: "2023-09-01",
+        basicSalary: 4200,
+        allowances: 600,
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(sampleData, { header: TEMPLATE_COLUMNS });
+    // Auto-size columns
+    ws["!cols"] = TEMPLATE_COLUMNS.map((col) => ({ wch: Math.max(col.length, 15) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Employees");
+    XLSX.writeFile(wb, "employee_import_template.xlsx");
+    toast.success("Template downloaded");
+  }
+
+  // Handle file upload (Excel only)
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "xlsx" && ext !== "xls") {
+      toast.error("Please upload an Excel file (.xlsx or .xls)");
+      e.target.value = "";
+      return;
+    }
+
+    setFileName(file.name);
+    setParsedRows([]);
+
     try {
-      const lines = csv.trim().split(/\r?\n/);
-      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-      let count = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const cells = lines[i].split(",").map((c) => c.trim());
-        const obj: any = {};
-        headers.forEach((h, idx) => { obj[h] = cells[idx]; });
-        if (!obj.name) continue;
-        const body = {
-          empNo: obj.empno || `TAJ-${Math.floor(Math.random() * 9000) + 1000}`,
-          fullName: obj.name,
-          nationality: obj.nationality || "Saudi",
-          jobTitle: obj.jobtitle || obj.job || "Staff",
-          department: obj.department || "Production",
-          hireDate: obj.hiredate || todayISO(),
-          basicSalary: Number(obj.basicsalary) || 0,
-          allowances: Number(obj.allowances) || 0,
-          phone: obj.phone || "",
-          email: obj.email || "",
-          visaType: obj.visatype || (obj.nationality === "Saudi" ? "Saudi National" : "Iqama"),
-        };
-        try {
-          const res = await fetch("/api/employees", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-          if (res.ok) count++;
-        } catch {}
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      if (rows.length === 0) {
+        toast.error("No data found in the Excel file");
+        return;
       }
-      toast.success(`${count} employees imported`);
+      // Filter out rows without a name
+      const valid = rows.filter((r) => r.name || r.fullName);
+      if (valid.length === 0) {
+        toast.error("No valid rows found. The file must have a 'name' column.");
+        return;
+      }
+      setParsedRows(valid);
+      toast.success(`${valid.length} rows parsed from Excel`);
+    } catch (err) {
+      toast.error("Failed to read Excel file. Make sure it's a valid .xlsx file.");
+    }
+    e.target.value = "";
+  }
+
+  // Import parsed rows
+  async function handleImport() {
+    if (parsedRows.length === 0) return;
+    setLoading(true);
+    let count = 0;
+    let failed = 0;
+
+    for (const row of parsedRows) {
+      const body = {
+        empNo: row.empNo || row.empno || `TAJ-${Math.floor(Math.random() * 9000) + 1000}`,
+        fullName: row.name || row.fullName || "",
+        arabicName: row.arabicName || row.arabicname || "",
+        nationality: row.nationality || "Saudi",
+        gender: (row.gender || "male").toLowerCase(),
+        maritalStatus: (row.maritalStatus || row.maritalstatus || "single").toLowerCase(),
+        dob: row.dob || "",
+        phone: row.phone || row.mobile || "",
+        email: row.email || "",
+        address: row.address || "",
+        emergencyContact: row.emergencyContact || row.emergencycontact || "",
+        iqamaNo: row.iqamaNo || row.iqamano || row.iqama || "",
+        passportNo: row.passportNo || row.passportno || "",
+        sponsor: row.sponsor || "Tanoor Al Jazeera",
+        visaType: row.visaType || row.visatype || (row.nationality === "Saudi" ? "Saudi National" : "Iqama"),
+        bankIban: row.bankIban || row.bankiban || "",
+        jobTitle: row.jobTitle || row.jobtitle || row.job || "Staff",
+        department: row.department || "Production",
+        hireDate: row.hireDate || row.hiredate || new Date().toISOString().slice(0, 10),
+        basicSalary: Number(row.basicSalary || row.basicsalary || row.salary) || 0,
+        allowances: Number(row.allowances) || 0,
+      };
+      if (!body.fullName) { failed++; continue; }
+      try {
+        const res = await fetch("/api/employees", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) count++;
+        else failed++;
+      } catch { failed++; }
+    }
+
+    setLoading(false);
+    if (count > 0) toast.success(`${count} employee${count > 1 ? "s" : ""} imported successfully`);
+    if (failed > 0) toast.error(`${failed} row${failed > 1 ? "s" : ""} failed to import`);
+    if (count > 0) {
+      setParsedRows([]);
+      setFileName("");
       onImported();
-      setCsv("");
-    } finally {
-      setLoading(false);
     }
   }
 
   return (
-    <ModalShell open={open} onClose={onClose} title={t("emp.importCsv")} size="lg">
-      <p className="mb-3 text-sm text-muted-foreground">
-        Paste CSV data. First line must be headers. Supported: empNo, name, nationality, jobTitle, department, hireDate, basicSalary, allowances, phone, email
-      </p>
-      <textarea
-        rows={10}
-        value={csv}
-        onChange={(e) => setCsv(e.target.value)}
-        placeholder={"empNo,name,nationality,jobTitle,department,hireDate,basicSalary,allowances,phone,email\nTAJ-100,John Doe,Saudi,Operator,Production,2024-01-15,3000,500,+966501234567,john@tanoor.sa"}
-        className="tanoor-input w-full rounded-lg border border-input bg-background p-3 font-mono text-xs text-foreground focus:outline-none"
-      />
+    <ModalShell open={open} onClose={onClose} title="Import Employees (Excel)" size="lg">
+      {/* Download Template */}
+      <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Download Sample Template</p>
+              <p className="text-xs text-slate-500">Excel file with all columns + 2 sample rows</p>
+            </div>
+          </div>
+          <button
+            onClick={downloadTemplate}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </button>
+        </div>
+      </div>
+
+      {/* Upload Area */}
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5"); }}
+        onDragLeave={(e) => { e.currentTarget.classList.remove("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5"); }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5");
+          const file = e.dataTransfer.files?.[0];
+          if (file) {
+            const ext = file.name.split(".").pop()?.toLowerCase();
+            if (ext === "xlsx" || ext === "xls") {
+              setFileName(file.name);
+              file.arrayBuffer().then((buf) => {
+                const wb = XLSX.read(buf, { type: "array" });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+                const valid = rows.filter((r) => r.name || r.fullName);
+                if (valid.length > 0) { setParsedRows(valid); toast.success(`${valid.length} rows parsed`); }
+                else toast.error("No valid rows found (need 'name' column)");
+              });
+            } else { toast.error("Please upload .xlsx or .xls file"); }
+          }
+        }}
+        className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 transition hover:border-[var(--color-brand-light)] hover:bg-[var(--color-brand-light)]/5"
+      >
+        <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} />
+        <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-slate-400 shadow-sm">
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+        </div>
+        <p className="text-center text-xs">
+          {fileName ? <span className="font-semibold text-slate-700">{fileName}</span> : "Drop Excel file here or click to browse (.xlsx only)"}
+        </p>
+        {parsedRows.length > 0 && (
+          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+            {parsedRows.length} rows ready to import
+          </span>
+        )}
+      </div>
+
+      {/* Preview Table */}
+      {parsedRows.length > 0 && (
+        <div className="mt-4 max-h-48 overflow-auto rounded-lg border border-slate-100">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-slate-50">
+              <tr>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Emp No</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Name</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Dept</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Salary</th>
+              </tr>
+            </thead>
+            <tbody>
+              {parsedRows.slice(0, 20).map((r, i) => (
+                <tr key={i} className="border-t border-slate-50">
+                  <td className="px-2 py-1.5 text-slate-600">{r.empNo || r.empno || "—"}</td>
+                  <td className="px-2 py-1.5 font-medium text-slate-800">{r.name || r.fullName || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.department || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.basicSalary || r.basicsalary || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {parsedRows.length > 20 && (
+            <p className="bg-slate-50 px-2 py-1 text-center text-[11px] text-slate-400">
+              +{parsedRows.length - 20} more rows…
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
       <div className="mt-4 flex items-center justify-end gap-2">
-        <button onClick={onClose} className="h-10 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted">
-          {t("dash.cancel")}
+        <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          Cancel
         </button>
-        <button onClick={handleImport} disabled={loading || !csv.trim()} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("dash.import")}
+        <button
+          onClick={handleImport}
+          disabled={loading || parsedRows.length === 0}
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[var(--color-brand-deep)] px-5 text-sm font-semibold text-white shadow-md transition hover:bg-[var(--color-brand-card)] disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          Import ({parsedRows.length})
         </button>
       </div>
     </ModalShell>
