@@ -558,27 +558,38 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
                 <label className="mb-1 block text-xs font-medium text-slate-400">
                   {field === "profilePhoto" ? t("emp.profilePhoto") : field === "iqamaPhoto" ? t("emp.iqamaPhoto") : t("emp.passportPhoto")}
                 </label>
-                <div className="flex items-center gap-2">
-                  <label className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs text-slate-400 hover:bg-slate-100">
-                    <Upload className="me-1.5 h-3.5 w-3.5" />
-                    {form[field] ? "✓ Uploaded" : t("emp.uploadPhoto")}
+                {form[field] ? (
+                  <div className="relative overflow-hidden rounded-lg border border-slate-200">
+                    <img src={form[field]} alt={field} className="h-32 w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-slate-900/60 px-2 py-1.5">
+                      <label className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-white hover:text-amber-300">
+                        <Upload className="h-3 w-3" /> Change
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadPhoto(field, f);
+                        }} />
+                      </label>
+                      <button type="button" onClick={() => set(field, "")} className="text-[11px] font-medium text-white hover:text-red-400">Remove</button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-white text-slate-400 transition hover:border-[var(--color-brand-light)] hover:bg-slate-50">
+                    <Upload className="h-5 w-5" />
+                    <span className="text-xs">{t("emp.uploadPhoto")}</span>
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                       const f = e.target.files?.[0];
                       if (f) uploadPhoto(field, f);
                     }} />
                   </label>
-                  {form[field] && (
-                    <img src={form[field]} alt="" className="h-10 w-10 rounded-lg border border-slate-200 object-cover" />
-                  )}
-                </div>
+                )}
                 {field === "iqamaPhoto" && form.iqamaPhoto && (
-                  <button type="button" onClick={() => extractDoc("iqama")} disabled={extractingIqama} className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                  <button type="button" onClick={() => extractDoc("iqama")} disabled={extractingIqama} className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50">
                     {extractingIqama ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                     {extractingIqama ? t("emp.extracting") : t("emp.extractIqama")}
                   </button>
                 )}
                 {field === "passportPhoto" && form.passportPhoto && (
-                  <button type="button" onClick={() => extractDoc("passport")} disabled={extractingPassport} className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                  <button type="button" onClick={() => extractDoc("passport")} disabled={extractingPassport} className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50">
                     {extractingPassport ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                     {extractingPassport ? t("emp.extracting") : t("emp.extractPassport")}
                   </button>

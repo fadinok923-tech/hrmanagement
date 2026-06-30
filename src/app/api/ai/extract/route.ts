@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { readFile } from "fs/promises";
+import path from "path";
 
 const schema = z.object({
   imageUrl: z.string().min(1),
@@ -17,6 +19,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 422 });
     }
     const { imageUrl, type } = parsed.data;
+
+    // Read the image file from disk and convert to base64 data URL
+    let dataUrl = imageUrl;
+    
+    if (imageUrl.startsWith("data:")) {
+      // Already a data URL
+      dataUrl = imageUrl;
+    } else if (imageUrl.startsWith("/")) {
+      // Relative URL — read from disk
+      const filePath = path.join(process.cwd(), "public", imageUrl);
+      try {
+        const buffer = await readFile(filePath);
+        const ext = path.extname(imageUrl).toLowerCase();
+        const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : ext === ".gif" ? "image/gif" : "image/jpeg";
+        dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+      } catch {
+        return NextResponse.json({ ok: false, error: "Image file not found on server" }, { status: 404 });
+      }
+    }
 
     const prompt = type === "iqama"
       ? `Extract the following fields from this Saudi Iqama image and return STRICT JSON only (no markdown, no prose, no backticks):
@@ -52,7 +73,7 @@ export async function POST(request: Request) {
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: imageUrl } },
+            { type: "image_url", image_url: { url: dataUrl } },
           ],
         },
       ],
