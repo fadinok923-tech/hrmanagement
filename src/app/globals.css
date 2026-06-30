@@ -209,7 +209,40 @@ html[dir="rtl"] body {
 .gold-shimmer { animation: gold-shimmer 3.2s ease-in-out infinite; }
 
 /* Input focus ring matching brand */
+.tanoor-input {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tanoor-input::placeholder {
+  color: #94a3b8 !important;
+}
 .tanoor-input:focus {
-  border-color: var(--color-brand-light);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+  border-color: var(--color-brand-light) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16) !important;
+}
+
+/* Force modal content to always be light, even in dark mode */
+.modal-shell {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+.modal-shell input,
+.modal-shell select,
+.modal-shell textarea {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+}
+.modal-shell input::placeholder,
+.modal-shell textarea::placeholder {
+  color: #94a3b8 !important;
+}
+.modal-shell label,
+.modal-shell span,
+.modal-shell p,
+.modal-shell div,
+.modal-shell h2,
+.modal-shell h3 {
+  color: inherit;
 }

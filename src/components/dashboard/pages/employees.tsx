@@ -127,7 +127,7 @@ export function EmployeesPage() {
           </div>
           <div className="min-w-0">
             <p className="truncate font-medium">{e.fullName}</p>
-            <p className="truncate text-xs text-muted-foreground">{e.jobTitle}</p>
+            <p className="truncate text-xs text-slate-400">{e.jobTitle}</p>
           </div>
         </div>
       ),
@@ -145,10 +145,10 @@ export function EmployeesPage() {
         subtitle={t("emp.subtitle")}
         actions={
           <>
-            <button onClick={() => setImportOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+            <button onClick={() => setImportOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
               <Upload className="h-3.5 w-3.5" /> {t("emp.importCsv")}
             </button>
-            <button onClick={handleExport} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+            <button onClick={handleExport} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
               <Download className="h-3.5 w-3.5" /> {t("emp.exportXlsx")}
             </button>
             <button onClick={openAdd} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-colors hover:bg-foreground/90">
@@ -168,13 +168,13 @@ export function EmployeesPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("dash.search.placeholder")}
-            className="tanoor-input h-9 w-full rounded-lg border border-input bg-card ps-9 pe-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="tanoor-input h-9 w-full rounded-lg border border-input bg-white ps-9 pe-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
           />
         </div>
         <FilterSelect value={dept} onChange={setDept} className="w-36"
@@ -188,11 +188,11 @@ export function EmployeesPage() {
             { value: "on_leave", label: t("emp.onLeave") },
             { value: "terminated", label: "Terminated" },
           ]} />
-        <div className="flex overflow-hidden rounded-lg border border-border">
-          <button onClick={() => setView("card")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "card" ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-muted"}`} aria-label={t("emp.cardView")}>
+        <div className="flex overflow-hidden rounded-lg border border-slate-200">
+          <button onClick={() => setView("card")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "card" ? "bg-foreground text-background" : "bg-white text-slate-900 hover:bg-slate-100"}`} aria-label={t("emp.cardView")}>
             <Grid3x3 className="h-4 w-4" />
           </button>
-          <button onClick={() => setView("table")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "table" ? "bg-foreground text-background" : "bg-card text-foreground hover:bg-muted"}`} aria-label={t("emp.tableView")}>
+          <button onClick={() => setView("table")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "table" ? "bg-foreground text-background" : "bg-white text-slate-900 hover:bg-slate-100"}`} aria-label={t("emp.tableView")}>
             <List className="h-4 w-4" />
           </button>
         </div>
@@ -209,36 +209,36 @@ export function EmployeesPage() {
       ) : view === "card" ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((e) => (
-            <div key={e.id} className="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-foreground/20">
+            <div key={e.id} className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-foreground/20">
               <div className="flex items-start gap-3">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: e.avatarColor }}>
                   {e.fullName.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-foreground">{e.fullName}</p>
-                  <p className="truncate text-xs text-muted-foreground">{e.empNo} · {e.jobTitle}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{e.department}</p>
+                  <p className="truncate font-semibold text-slate-900">{e.fullName}</p>
+                  <p className="truncate text-xs text-slate-400">{e.empNo} · {e.jobTitle}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-400">{e.department}</p>
                 </div>
                 <StatusBadge status={e.status} />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-muted/40 p-2">
-                  <p className="text-[10px] text-muted-foreground">{t("emp.nationality")}</p>
-                  <p className="font-medium text-foreground">{e.nationality}</p>
+                  <p className="text-[10px] text-slate-400">{t("emp.nationality")}</p>
+                  <p className="font-medium text-slate-900">{e.nationality}</p>
                 </div>
                 <div className="rounded-lg bg-muted/40 p-2">
-                  <p className="text-[10px] text-muted-foreground">{t("emp.salary")}</p>
-                  <p className="font-medium text-foreground">{formatSAR(e.basicSalary + e.allowances)}</p>
+                  <p className="text-[10px] text-slate-400">{t("emp.salary")}</p>
+                  <p className="font-medium text-slate-900">{formatSAR(e.basicSalary + e.allowances)}</p>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-1">
-                <button onClick={() => setEmployeeDetailId(e.id)} className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+                <button onClick={() => setEmployeeDetailId(e.id)} className="flex-1 rounded-lg border border-slate-200 bg-background px-3 py-1.5 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
                   {t("emp.viewDetails")}
                 </button>
-                <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600">
+                <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-600">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -252,10 +252,10 @@ export function EmployeesPage() {
           onRowClick={(e) => setEmployeeDetailId(e.id)}
           rowActions={(e) => (
             <>
-              <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+              <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-red-500/10 hover:text-red-600">
+              <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-red-500/10 hover:text-red-600">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </>
@@ -404,7 +404,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
   function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
     return (
       <div>
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+        <label className="mb-1 block text-xs font-medium text-slate-400">
           {label}{required && <span className="text-red-500"> *</span>}
         </label>
         {children}
@@ -412,14 +412,14 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
     );
   }
 
-  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none";
+  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none";
 
   return (
     <ModalShell open={open} onClose={onClose} title={editing ? t("emp.editEmployee") : t("emp.addEmployee")} size="xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.personal")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.personal")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.empNo")} required>
               <input className={inputCls} value={form.empNo || ""} onChange={(e) => set("empNo", e.target.value)} required />
@@ -469,7 +469,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Employment */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.employment")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.employment")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.job")} required>
               <input className={inputCls} value={form.jobTitle || ""} onChange={(e) => set("jobTitle", e.target.value)} required />
@@ -503,7 +503,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Legal */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.legal")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.legal")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.iqamaNo")}>
               <input className={inputCls} value={form.iqamaNo || ""} onChange={(e) => set("iqamaNo", e.target.value)} />
@@ -525,7 +525,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Financial */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.financial")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.financial")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.basicSalary")}>
               <input type="number" className={inputCls} value={form.basicSalary || 0} onChange={(e) => set("basicSalary", Number(e.target.value))} />
@@ -544,15 +544,15 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Photos */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.photos")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.photos")}</h4>
           <div className="grid gap-3 sm:grid-cols-3">
             {(["profilePhoto", "iqamaPhoto", "passportPhoto"] as const).map((field) => (
               <div key={field}>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                <label className="mb-1 block text-xs font-medium text-slate-400">
                   {field === "profilePhoto" ? t("emp.profilePhoto") : field === "iqamaPhoto" ? t("emp.iqamaPhoto") : t("emp.passportPhoto")}
                 </label>
                 <div className="flex items-center gap-2">
-                  <label className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-input bg-background text-xs text-muted-foreground hover:bg-muted">
+                  <label className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs text-slate-400 hover:bg-slate-100">
                     <Upload className="me-1.5 h-3.5 w-3.5" />
                     {form[field] ? "✓ Uploaded" : t("emp.uploadPhoto")}
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -561,7 +561,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
                     }} />
                   </label>
                   {form[field] && (
-                    <img src={form[field]} alt="" className="h-10 w-10 rounded-lg border border-border object-cover" />
+                    <img src={form[field]} alt="" className="h-10 w-10 rounded-lg border border-slate-200 object-cover" />
                   )}
                 </div>
                 {field === "iqamaPhoto" && form.iqamaPhoto && (
@@ -583,11 +583,11 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Notes */}
         <Field label={t("emp.notes")}>
-          <textarea rows={3} className="tanoor-input w-full rounded-lg border border-input bg-background p-3 text-sm text-foreground focus:outline-none" value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} />
+          <textarea rows={3} className="tanoor-input w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:outline-none" value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} />
         </Field>
 
-        <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
+          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-background px-4 text-sm font-medium text-slate-900 hover:bg-slate-100">
             {t("dash.cancel")}
           </button>
           <button type="submit" disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
