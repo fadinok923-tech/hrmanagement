@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Tanoor Al Jazeera HR System — Prisma schema
 
 generator client {
   provider = "prisma-client-js"
@@ -15,18 +11,164 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  email     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
+model Employee {
+  id              String       @id @default(cuid())
+  empNo           String       @unique
+  fullName        String
+  fullNameAr      String?
+  nationality     String
+  gender          String       @default("male")
+  dateOfBirth     DateTime?
+  maritalStatus   String?
+  phone           String?
+  email           String?
+  address         String?
+  emergencyContact String?
+  jobTitle        String
+  department      String
+  employmentType  String       @default("full_time")
+  hireDate        DateTime
+  contractEnd     DateTime?
+  basicSalary     Float        @default(0)
+  allowances      Float        @default(0)
+  bankAccount     String?
+  iban            String?
+  passportNo      String?
+  passportExpiry  DateTime?
+  iqamaNo         String?
+  iqamaExpiry     DateTime?
+  visaType        String?
+  status          String       @default("active")
+  profilePhoto    String?
+  iqamaPhoto      String?
+  passportPhoto   String?
+  avatarColor     String       @default("#1e3a8a")
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  attendance      Attendance[]
+  leaves          Leave[]
+  payrolls        Payroll[]
+  documents       Document[]
+  kpis            Kpi[]
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      String   @default("present") // present | late | absent | leave | holiday
+  workHours   Float    @default(0)
+  overtime    Float    @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Leave {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        String   @default("annual") // annual | sick | emergency | unpaid | maternity
+  startDate   DateTime
+  endDate     DateTime
+  days        Float    @default(1)
+  reason      String?
+  status      String   @default("pending") // pending | approved | rejected
+  approver    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payroll {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month        String   // YYYY-MM
+  basicSalary  Float    @default(0)
+  allowances   Float    @default(0)
+  overtime     Float    @default(0)
+  deductions   Float    @default(0)
+  gosi         Float    @default(0)
+  netSalary    Float    @default(0)
+  status       String   @default("processed") // processed | paid | pending
+  payDate      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  type        String   @default("other") // iqama | passport | contract | certificate | other
+  fileUrl     String?
+  fileName    String?
+  fileSize    Int?
+  mimeType    String?
+  issueDate   DateTime?
+  expiryDate  DateTime?
+  status      String   @default("valid") // valid | expiring | expired
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Candidate {
+  id            String   @id @default(cuid())
+  fullName      String
+  email         String?
+  phone         String?
+  position      String
+  department    String?
+  source        String?
+  experience    Int?
+  status        String   @default("applied") // applied | screening | interview | offered | hired | rejected
+  rating        Int      @default(3)
+  expectedSalary Float?
+  notes         String?
+  resumeUrl     String?
+  appliedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Kpi {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  period      String   // YYYY-MM or YYYY-Qn
+  productivity Int     @default(0)
+  quality      Int     @default(0)
+  teamwork     Int     @default(0)
+  punctuality  Int     @default(0)
+  initiative   Int     @default(0)
+  finalScore   Float   @default(0)
+  comments     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model File {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  name      String
+  url       String
+  mimeType  String
+  size      Int
+  folder    String   @default("general")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

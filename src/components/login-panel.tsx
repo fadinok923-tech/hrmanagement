@@ -63,15 +63,11 @@ export function LoginPanel() {
       }
 
       toast.success(t("login.success"));
-      // The original is a single login landing; reflect the signed-in state.
       try {
-        sessionStorage.setItem(
-          "tanoor-session",
-          JSON.stringify({ user: data.user, at: Date.now() }),
-        );
-      } catch {
-        /* ignore */
-      }
+        sessionStorage.setItem("tanoor-session", JSON.stringify({ user: data.user, at: Date.now() }));
+      } catch {}
+      // Force reload to switch to dashboard
+      window.location.reload();
     } catch {
       setError(t("login.err.invalid"));
       toast.error(t("login.err.invalid"));

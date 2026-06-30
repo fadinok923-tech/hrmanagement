@@ -1,0 +1,254 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "sonner";
+import { Download, FileSpreadsheet, Building2, Users, TrendingUp, Award } from "lucide-react";
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line,
+} from "recharts";
+import { useLanguage } from "@/components/language-provider";
+import { PageHeader, StatCard, Panel } from "../shared";
+import { normalizeReport, normalizeEmployeeList, normalizePayrollList, normalizeAttendanceList, normalizeKpiList, formatSAR, formatNumber, type NormalReport } from "../api-helpers";
+import { exportMultiSheet } from "@/lib/excel";
+
+const COLORS = ["#1e3a8a", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#0ea5e9", "#f97316"];
+
+export function ReportsPage() {
+  const { t } = useLanguage();
+  const [data, setData] = useState<NormalReport | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/reports")
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setData(normalizeReport(d.data)); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function exportAllEmployees() {
+    const res = await fetch("/api/employees");
+    const d = await res.json();
+    if (!d.ok) return;
+    const rows = normalizeEmployeeList(d.data).map((e) => ({
+      "Emp No": e.empNo,
+      "Full Name": e.fullName,
+      "Arabic Name": e.fullNameAr || "",
+      Nationality: e.nationality,
+      Gender: e.gender,
+      "Job Title": e.jobTitle,
+      Department: e.department,
+      "Basic Salary": e.basicSalary,
+      Allowances: e.allowances,
+      "Hire Date": e.hireDate,
+      "Iqama No": e.iqamaNo,
+      "Iqama Expiry": e.iqamaExpiry,
+      "Passport No": e.passportNo,
+      Phone: e.phone,
+      Email: e.email,
+      Status: e.status,
+    }));
+    exportMultiSheet([{ name: "Employees", rows }], "employees_export");
+    toast.success(t("dash.exported"));
+  }
+
+  async function exportFullReport() {
+    const [empRes, payRes, attRes, kpiRes] = await Promise.all([
+      fetch("/api/employees"), fetch("/api/payroll"), fetch("/api/attendance"), fetch("/api/kpis"),
+    ]);
+    const [empD, payD, attD, kpiD] = await Promise.all([empRes.json(), payRes.json(), attRes.json(), kpiRes.json()]);
+    const sheets = [
+      {
+        name: "Employees",
+        rows: normalizeEmployeeList(empD.data).map((e) => ({
+          "Emp No": e.empNo, Name: e.fullName, Nationality: e.nationality, Department: e.department,
+          "Job Title": e.jobTitle, Salary: e.basicSalary + e.allowances, Status: e.status,
+        })),
+      },
+      {
+        name: "Payroll",
+        rows: normalizePayrollList(payD.data).map((p) => ({
+          Month: p.month, Employee: p.employeeName, "Emp No": p.empNo,
+          Basic: p.basicSalary, Allowances: p.allowances, GOSI: p.gosi, Net: p.netSalary, Status: p.status,
+        })),
+      },
+      {
+        name: "Attendance",
+        rows: normalizeAttendanceList(attD.data).map((a) => ({
+          Date: a.date, Employee: a.employeeName, "Emp No": a.empNo,
+          "Check In": a.checkIn, "Check Out": a.checkOut, "Work Hrs": a.workHours, Status: a.status,
+        })),
+      },
+      {
+        name: "KPIs",
+        rows: normalizeKpiList(kpiD.data).map((k) => ({
+          Period: k.period, Employee: k.employeeName, "Emp No": k.empNo,
+          Productivity: k.productivity, Quality: k.quality, Teamwork: k.teamwork,
+          Punctuality: k.punctuality, Initiative: k.initiative, Final: k.finalScore,
+        })),
+      },
+      {
+        name: "Summary",
+        rows: data ? [
+          { Metric: "Total Employees", Value: data.overview.totalEmployees },
+          { Metric: "Saudi", Value: data.overview.saudiCount },
+          { Metric: "Expat", Value: data.overview.expatCount },
+          { Metric: "Saudization %", Value: data.overview.saudizationRate },
+          { Metric: "Monthly Payroll", Value: data.overview.totalMonthlySalary },
+          { Metric: "Pending Leaves", Value: data.overview.pendingLeaves },
+          { Metric: "Avg KPI", Value: data.overview.avgKpi },
+          { Metric: "Total Documents", Value: data.overview.totalDocuments },
+          { Metric: "Expired Docs", Value: data.documents.expired },
+          { Metric: "Expiring Docs", Value: data.documents.expiring },
+        ] : [],
+      },
+    ];
+    exportMultiSheet(sheets, "hr_full_report");
+    toast.success(t("dash.exported"));
+  }
+
+  const kpiByDept = useMemo(() => {
+    return Object.entries(data?.byDepartment || {}).map(([name, count]) => ({ name, value: count as number }));
+  }, [data]);
+
+  if (loading || !data) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title={t("rep.title")} subtitle={t("rep.subtitle")} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />)}
+        </div>
+      </div>
+    );
+  }
+
+  const o = data.overview;
+  const deptData = Object.entries(data.byDepartment).map(([name, value]) => ({ name, value }));
+  const visaData = [
+    { name: t("rep.saudi"), value: o.saudiCount, color: "#1e3a8a" },
+    { name: t("rep.expat"), value: o.expatCount, color: "#f59e0b" },
+  ];
+  const payrollByMonth = Object.entries(data.payrollByMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, v]) => ({ month, total: v.total, gosi: v.gosi }));
+  const attData = [
+    { name: t("att.present"), value: data.attendance.present, color: "#10b981" },
+    { name: t("att.late"), value: data.attendance.late, color: "#f59e0b" },
+    { name: t("att.absent"), value: data.attendance.absent, color: "#ef4444" },
+    { name: t("att.leave"), value: data.attendance.leave, color: "#3b82f6" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title={t("rep.title")}
+        subtitle={t("rep.subtitle")}
+        actions={
+          <>
+            <button onClick={exportAllEmployees} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-muted">
+              <Users className="h-3.5 w-3.5" /> {t("rep.exportAllEmp")}
+            </button>
+            <button onClick={exportFullReport} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background hover:bg-foreground/90">
+              <FileSpreadsheet className="h-3.5 w-3.5" /> {t("rep.exportFull")}
+            </button>
+          </>
+        }
+      />
+
+      {/* Saudization section */}
+      <Panel title={t("rep.saudization")}>
+        <div className="grid items-center gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid place-items-center">
+            <div className="relative h-36 w-36">
+              <PieChart width={144} height={144}>
+                <Pie data={visaData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={68} paddingAngle={3}>
+                  {visaData.map((v, i) => <Cell key={i} fill={v.color} />)}
+                </Pie>
+              </PieChart>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-2xl font-bold text-foreground">{o.saudizationRate}%</p>
+                <p className="text-[10px] text-muted-foreground">{t("rep.rate")}</p>
+              </div>
+            </div>
+          </div>
+          <StatCard title={t("rep.saudi")} value={formatNumber(o.saudiCount)} icon={<Users className="h-4 w-4" />} accent="green" />
+          <StatCard title={t("rep.expat")} value={formatNumber(o.expatCount)} icon={<Users className="h-4 w-4" />} accent="gold" />
+          <StatCard title={t("rep.target")} value="≥ 25%" icon={<Award className="h-4 w-4" />} accent="blue" delta="Nitaqat Platinum" />
+        </div>
+      </Panel>
+
+      {/* Summary */}
+      <Panel title={t("rep.summary")}>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard title={t("company.totalEmployees")} value={o.totalEmployees} icon={<Users className="h-4 w-4" />} accent="blue" />
+          <StatCard title={t("company.monthlyPayroll")} value={formatSAR(o.totalMonthlySalary)} icon={<Building2 className="h-4 w-4" />} accent="gold" />
+          <StatCard title={t("company.avgKpi")} value={o.avgKpi} icon={<TrendingUp className="h-4 w-4" />} accent="green" />
+          <StatCard title={t("company.pendingLeaves")} value={o.pendingLeaves} icon={<Building2 className="h-4 w-4" />} accent="red" />
+        </div>
+      </Panel>
+
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title={t("rep.deptBreakdown")}>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={deptData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
+                  {deptData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title={t("rep.attendanceTrend")}>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={attData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.15)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {attData.map((v, i) => <Cell key={i} fill={v.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title={t("rep.payrollByMonth")}>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={payrollByMonth} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.15)" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => formatSAR(v)} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="total" name="Net Salary" stroke="#1e3a8a" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="gosi" name="GOSI" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title={t("rep.kpiByDept")}>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={kpiByDept} layout="vertical" margin={{ top: 10, right: 10, left: 80, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,120,120,0.15)" />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#1e3a8a" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}

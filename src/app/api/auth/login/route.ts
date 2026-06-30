@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { db } from "@/lib/db";
 
 const schema = z.object({
   username: z.string().trim().min(1).max(64),
   password: z.string().min(1).max(128),
   remember: z.boolean().optional(),
 });
-
-// Demo credentials — mirrors the original system's "contact administrator" model.
-const DEMO_USER = "admin";
-const DEMO_PASS = "tanoor2025";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -33,23 +31,38 @@ export async function POST(request: Request) {
   const { username, password, remember } = parsed.data;
 
   // Simulate a small auth delay for realistic UX.
-  await new Promise((r) => setTimeout(r, 650));
+  await new Promise((r) => setTimeout(r, 350));
 
-  if (username === DEMO_USER && password === DEMO_PASS) {
+  try {
+    const user = await db.user.findUnique({ where: { username } });
+    if (!user || !user.password) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid username or password." },
+        { status: 401 },
+      );
+    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid username or password." },
+        { status: 401 },
+      );
+    }
     return NextResponse.json({
       ok: true,
       user: {
-        username,
-        name: "System Administrator",
-        role: "admin",
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        email: user.email,
       },
-      token: Buffer.from(`${username}:${Date.now()}`).toString("base64"),
+      token: Buffer.from(`${user.username}:${Date.now()}`).toString("base64"),
       remember: Boolean(remember),
     });
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Authentication service unavailable." },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json(
-    { ok: false, error: "Invalid username or password." },
-    { status: 401 },
-  );
 }

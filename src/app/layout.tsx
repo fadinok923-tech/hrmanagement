@@ -3,6 +3,7 @@ import { Cairo, Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/components/language-provider";
+import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,7 +48,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${cairo.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <LanguageProvider>{children}</LanguageProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <LanguageProvider>{children}</LanguageProvider>
+        </ThemeProvider>
         <SonnerToaster position="top-center" richColors closeButton />
       </body>
     </html>
