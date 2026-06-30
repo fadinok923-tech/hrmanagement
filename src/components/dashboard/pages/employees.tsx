@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, type FormEvent } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, type FormEvent } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import {
@@ -97,6 +97,9 @@ export function EmployeesPage() {
     setEditing(e);
     setModalOpen(true);
   }
+
+  const handleCloseModal = useCallback(() => setModalOpen(false), []);
+  const handleSaved = useCallback(() => { setModalOpen(false); load(); }, [load]);
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -266,9 +269,9 @@ export function EmployeesPage() {
       {modalOpen && (
         <EmployeeModal
           open={modalOpen}
-          onClose={() => setModalOpen(false)}
+          onClose={handleCloseModal}
           editing={editing}
-          onSaved={() => { setModalOpen(false); load(); }}
+          onSaved={handleSaved}
         />
       )}
 
@@ -297,8 +300,12 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
   const [saving, setSaving] = useState(false);
   const [extractingIqama, setExtractingIqama] = useState(false);
   const [extractingPassport, setExtractingPassport] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (!open) { initialized.current = false; return; }
+    if (initialized.current) return; // Only init once when modal opens
+    initialized.current = true;
     if (editing) setForm({ ...editing });
     else setForm({
       empNo: `TAJ-${String(Math.floor(Math.random() * 9000) + 1000)}`,
@@ -311,7 +318,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       visaType: "Saudi National", status: "active", notes: "",
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
-  }, [editing, open]);
+  }, [open, editing]);
 
   function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
 
