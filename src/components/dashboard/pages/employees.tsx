@@ -741,32 +741,40 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
 
     for (const row of parsedRows) {
       // Map Excel columns to API schema — ensure required fields have values
-      const fullName = row.name || row.fullName || "";
-      if (!fullName.trim()) { failed++; continue; }
+      const fullName = String(row.name || row.fullName || "").trim();
+      if (!fullName) { failed++; continue; }
 
-      const body = {
-        empNo: row.empNo || row.empno || `TAJ-${Math.floor(Math.random() * 9000) + 1000}`,
+      const empNo = String(row.empNo || row.empno || "").trim() || `TAJ-${Date.now()}-${count}`;
+
+      const body: Record<string, unknown> = {
+        empNo: empNo,
         fullName: fullName,
-        arabicName: row.arabicName || row.arabicname || null,
-        nationality: row.nationality || "Saudi",
-        gender: (row.gender || "male").toLowerCase(),
-        dateOfBirth: row.dob || row.dateOfBirth || null,
-        maritalStatus: (row.maritalStatus || row.maritalstatus || "single").toLowerCase(),
-        phone: row.phone || row.mobile || null,
-        email: row.email || null,
-        address: row.address || null,
-        emergencyContact: row.emergencyContact || row.emergencycontact || null,
-        iqamaNo: row.iqamaNo || row.iqamano || row.iqama || null,
-        passportNo: row.passportNo || row.passportno || null,
-        visaType: row.visaType || row.visatype || (row.nationality === "Saudi" ? "Saudi National" : "Iqama"),
-        bankAccount: row.bankIban || row.bankiban || row.iban || null,
-        jobTitle: row.jobTitle || row.jobtitle || row.job || "Staff",
-        department: row.department || "Production",
-        hireDate: row.hireDate || row.hiredate || new Date().toISOString().slice(0, 10),
+        nationality: String(row.nationality || "Saudi").trim() || "Saudi",
+        gender: String(row.gender || "male").toLowerCase().trim() || "male",
+        jobTitle: String(row.jobTitle || row.jobtitle || row.job || "Staff").trim() || "Staff",
+        department: String(row.department || "Production").trim() || "Production",
+        hireDate: String(row.hireDate || row.hiredate || "").trim() || new Date().toISOString().slice(0, 10),
         basicSalary: Number(row.basicSalary || row.basicsalary || row.salary) || 0,
         allowances: Number(row.allowances) || 0,
         status: "active",
       };
+
+      // Optional fields — only add if non-empty
+      const opt: Record<string, string | null> = {
+        arabicName: String(row.arabicName || row.arabicname || "").trim() || null,
+        dateOfBirth: String(row.dob || row.dateOfBirth || "").trim() || null,
+        maritalStatus: String(row.maritalStatus || row.maritalstatus || "").trim().toLowerCase() || null,
+        phone: String(row.phone || row.mobile || "").trim() || null,
+        email: String(row.email || "").trim() || null,
+        address: String(row.address || "").trim() || null,
+        emergencyContact: String(row.emergencyContact || row.emergencycontact || "").trim() || null,
+        iqamaNo: String(row.iqamaNo || row.iqamano || row.iqama || "").trim() || null,
+        passportNo: String(row.passportNo || row.passportno || "").trim() || null,
+        visaType: String(row.visaType || row.visatype || "").trim() || null,
+        bankAccount: String(row.bankIban || row.bankiban || row.iban || "").trim() || null,
+      };
+      for (const [k, v] of Object.entries(opt)) { if (v) body[k] = v; }
+
       try {
         const res = await fetch("/api/employees", {
           method: "POST",
