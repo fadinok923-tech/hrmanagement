@@ -643,7 +643,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         nationality: "Saudi",
         gender: "male",
         maritalStatus: "single",
-        dob: "1990-05-15",
+        dateOfBirth: "1990-05-15",
         phone: "0501234567",
         email: "ahmed@tanoor.sa",
         address: "Riyadh, Saudi Arabia",
@@ -666,7 +666,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         nationality: "Indian",
         gender: "male",
         maritalStatus: "married",
-        dob: "1988-03-20",
+        dateOfBirth: "1988-03-20",
         phone: "0534567890",
         email: "rajesh@tanoor.sa",
         address: "Dammam, Saudi Arabia",
@@ -740,30 +740,33 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
     let failed = 0;
 
     for (const row of parsedRows) {
+      // Map Excel columns to API schema — ensure required fields have values
+      const fullName = row.name || row.fullName || "";
+      if (!fullName.trim()) { failed++; continue; }
+
       const body = {
         empNo: row.empNo || row.empno || `TAJ-${Math.floor(Math.random() * 9000) + 1000}`,
-        fullName: row.name || row.fullName || "",
-        arabicName: row.arabicName || row.arabicname || "",
+        fullName: fullName,
+        arabicName: row.arabicName || row.arabicname || null,
         nationality: row.nationality || "Saudi",
         gender: (row.gender || "male").toLowerCase(),
+        dateOfBirth: row.dob || row.dateOfBirth || null,
         maritalStatus: (row.maritalStatus || row.maritalstatus || "single").toLowerCase(),
-        dob: row.dob || "",
-        phone: row.phone || row.mobile || "",
-        email: row.email || "",
-        address: row.address || "",
-        emergencyContact: row.emergencyContact || row.emergencycontact || "",
-        iqamaNo: row.iqamaNo || row.iqamano || row.iqama || "",
-        passportNo: row.passportNo || row.passportno || "",
-        sponsor: row.sponsor || "Tanoor Al Jazeera",
+        phone: row.phone || row.mobile || null,
+        email: row.email || null,
+        address: row.address || null,
+        emergencyContact: row.emergencyContact || row.emergencycontact || null,
+        iqamaNo: row.iqamaNo || row.iqamano || row.iqama || null,
+        passportNo: row.passportNo || row.passportno || null,
         visaType: row.visaType || row.visatype || (row.nationality === "Saudi" ? "Saudi National" : "Iqama"),
-        bankIban: row.bankIban || row.bankiban || "",
+        bankAccount: row.bankIban || row.bankiban || row.iban || null,
         jobTitle: row.jobTitle || row.jobtitle || row.job || "Staff",
         department: row.department || "Production",
         hireDate: row.hireDate || row.hiredate || new Date().toISOString().slice(0, 10),
         basicSalary: Number(row.basicSalary || row.basicsalary || row.salary) || 0,
         allowances: Number(row.allowances) || 0,
+        status: "active",
       };
-      if (!body.fullName) { failed++; continue; }
       try {
         const res = await fetch("/api/employees", {
           method: "POST",
@@ -771,7 +774,10 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
           body: JSON.stringify(body),
         });
         if (res.ok) count++;
-        else failed++;
+        else {
+          console.error("Import row failed:", await res.text());
+          failed++;
+        }
       } catch { failed++; }
     }
 
