@@ -783,7 +783,6 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         });
         if (res.ok) count++;
         else {
-          console.error("Import row failed:", await res.text());
           failed++;
         }
       } catch { failed++; }
