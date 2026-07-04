@@ -23,6 +23,18 @@ const COLORS = ["#1e3a8a", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444"
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
+// Field component — MUST be at top level (not inside EmployeeModal) to prevent input focus loss
+function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-slate-400">
+        {label}{required && <span className="text-red-500"> *</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 export function EmployeesPage() {
   const { t, locale } = useLanguage();
   const { setEmployeeDetailId } = useDashStore();
@@ -406,17 +418,6 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
     } finally {
       setSaving(false);
     }
-  }
-
-  function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
-    return (
-      <div>
-        <label className="mb-1 block text-xs font-medium text-slate-400">
-          {label}{required && <span className="text-red-500"> *</span>}
-        </label>
-        {children}
-      </div>
-    );
   }
 
   const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none";
