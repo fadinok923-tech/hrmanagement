@@ -746,6 +746,22 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
 
       const empNo = String(row.empNo || row.empno || "").trim() || `TAJ-${Date.now()}-${count}`;
 
+      // Convert Excel date serial numbers to ISO strings
+      function toDateStr(val: any): string {
+        if (!val && val !== 0) return "";
+        if (typeof val === "number") {
+          // Excel serial date: days since 1900-01-01 (with leap year bug)
+          const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+          return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+        }
+        const s = String(val).trim();
+        if (!s) return "";
+        const date = new Date(s);
+        return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+      }
+
+      const hireDateStr = toDateStr(row.hireDate || row.hiredate) || new Date().toISOString().slice(0, 10);
+
       const body: Record<string, unknown> = {
         empNo: empNo,
         fullName: fullName,
@@ -753,16 +769,17 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         gender: String(row.gender || "male").toLowerCase().trim() || "male",
         jobTitle: String(row.jobTitle || row.jobtitle || row.job || "Staff").trim() || "Staff",
         department: String(row.department || "Production").trim() || "Production",
-        hireDate: String(row.hireDate || row.hiredate || "").trim() || new Date().toISOString().slice(0, 10),
+        hireDate: hireDateStr,
         basicSalary: Number(row.basicSalary || row.basicsalary || row.salary) || 0,
         allowances: Number(row.allowances) || 0,
         status: "active",
       };
 
       // Optional fields — only add if non-empty
+      const dobStr = toDateStr(row.dob || row.dateOfBirth);
       const opt: Record<string, string | null> = {
         arabicName: String(row.arabicName || row.arabicname || "").trim() || null,
-        dateOfBirth: String(row.dob || row.dateOfBirth || "").trim() || null,
+        dateOfBirth: dobStr || null,
         maritalStatus: String(row.maritalStatus || row.maritalstatus || "").trim().toLowerCase() || null,
         phone: String(row.phone || row.mobile || "").trim() || null,
         email: String(row.email || "").trim() || null,

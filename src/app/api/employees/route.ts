@@ -92,7 +92,11 @@ export async function POST(request: Request) {
         fullNameAr: d.fullNameAr ?? null,
         nationality: d.nationality,
         gender: d.gender || "male",
-        dateOfBirth: d.dateOfBirth && String(d.dateOfBirth).trim() ? new Date(d.dateOfBirth) : null,
+        dateOfBirth: (() => {
+          if (!d.dateOfBirth || !String(d.dateOfBirth).trim()) return null;
+          const dt = new Date(d.dateOfBirth);
+          return isNaN(dt.getTime()) ? null : dt;
+        })(),
         maritalStatus: d.maritalStatus ?? null,
         phone: d.phone ?? null,
         email: d.email ?? null,
@@ -101,16 +105,32 @@ export async function POST(request: Request) {
         jobTitle: d.jobTitle,
         department: d.department,
         employmentType: d.employmentType || "full_time",
-        hireDate: d.hireDate && String(d.hireDate).trim() ? new Date(d.hireDate) : new Date(),
-        contractEnd: d.contractEnd && String(d.contractEnd).trim() ? new Date(d.contractEnd) : null,
+        hireDate: (() => {
+          if (!d.hireDate || !String(d.hireDate).trim()) return new Date();
+          const date = new Date(d.hireDate);
+          return isNaN(date.getTime()) ? new Date() : date;
+        })(),
+        contractEnd: (() => {
+          if (!d.contractEnd || !String(d.contractEnd).trim()) return null;
+          const dt = new Date(d.contractEnd);
+          return isNaN(dt.getTime()) ? null : dt;
+        })(),
         basicSalary: d.basicSalary ?? 0,
         allowances: d.allowances ?? 0,
         bankAccount: d.bankAccount ?? null,
         iban: d.iban ?? null,
         passportNo: d.passportNo ?? null,
-        passportExpiry: d.passportExpiry && String(d.passportExpiry).trim() ? new Date(d.passportExpiry) : null,
+        passportExpiry: (() => {
+          if (!d.passportExpiry || !String(d.passportExpiry).trim()) return null;
+          const dt = new Date(d.passportExpiry);
+          return isNaN(dt.getTime()) ? null : dt;
+        })(),
         iqamaNo: d.iqamaNo ?? null,
-        iqamaExpiry: d.iqamaExpiry && String(d.iqamaExpiry).trim() ? new Date(d.iqamaExpiry) : null,
+        iqamaExpiry: (() => {
+          if (!d.iqamaExpiry || !String(d.iqamaExpiry).trim()) return null;
+          const dt = new Date(d.iqamaExpiry);
+          return isNaN(dt.getTime()) ? null : dt;
+        })(),
         visaType: d.visaType ?? null,
         status: d.status || "active",
         profilePhoto: d.profilePhoto ?? null,
