@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, FileText, AlertTriangle, CheckCircle2, XCircle, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, Trash2, FileText, AlertTriangle, XCircle, Upload, Loader2, Eye } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { PageHeader, FilterSelect, StatCard, ModalShell, StatusBadge, EmptyState } from "../shared";
 import { DataTable, type Column } from "../data-table";
@@ -10,7 +10,6 @@ import { ConfirmDialog } from "../confirm-dialog";
 import { normalizeDocumentList, type NormalDocument } from "../api-helpers";
 
 const TYPES = ["iqama", "passport", "contract", "certificate", "other"];
-const DEPARTMENTS = ["Production", "Quality Control", "Maintenance", "Logistics", "Administration", "Sales"];
 
 export function DocumentsPage() {
   const { t } = useLanguage();
@@ -47,7 +46,6 @@ export function DocumentsPage() {
   useEffect(() => {
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
-     
   }, [search, type, status]);
 
   const stats = useMemo(() => ({
@@ -73,6 +71,19 @@ export function DocumentsPage() {
     { key: "issueDate", header: t("doc.issueDate"), render: (d) => <span className="font-mono text-xs">{d.issueDate || "—"}</span> },
     { key: "expiryDate", header: t("doc.expiryDate"), render: (d) => <span className="font-mono text-xs">{d.expiryDate || "—"}</span> },
     { key: "status", header: t("dash.status"), render: (d) => <StatusBadge status={d.status} /> },
+    {
+      key: "fileUrl" as any, header: "File",
+      render: (d: any) => d.fileUrl ? (
+        <a
+          href={d.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
+        >
+          <Eye className="h-3 w-3" /> View
+        </a>
+      ) : <span className="text-xs text-muted-foreground">—</span>,
+    },
   ];
 
   return (
@@ -273,6 +284,12 @@ function AddModal({ open, onClose, employees, onSaved }: {
                 if (f) uploadFile(f);
               }} />
             </label>
+            {form.fileUrl && (
+              <a href={form.fileUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex h-10 items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700 hover:bg-blue-100">
+                <Eye className="h-3.5 w-3.5" /> View
+              </a>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
