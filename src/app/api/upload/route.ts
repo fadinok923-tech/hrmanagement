@@ -1,43 +1,46 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-    const folder = (formData.get("folder") as string) || "general";
+    const folder = (formData.get("folder") as string) || "tanoor-hr/general";
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ ok: false, error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ ok: false, error: "File too large (max 10MB)" }, { status: 413 });
     }
 
-    const bytes = Buffer.from(await file.arrayBuffer());
-    
-    // Create directory if it doesn't exist
-    const dir = path.join(process.cwd(), "public", "uploads", folder);
-    if (!existsSync(dir)) {
-      await mkdir(dir, { recursive: true });
-    }
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // Generate safe filename
-    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filename = `${Date.now()}_${safe}`;
-    const fullPath = path.join(dir, filename);
-    await writeFile(fullPath, bytes);
-
-    const url = `/uploads/${folder}/${filename}`;
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: `tanoor-hr/${folder}`,
+          resource_type: "auto",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
 
     return NextResponse.json({
       ok: true,
       data: {
-        url,
+        url: result.secure_url,
         name: file.name,
         size: file.size,
         mimeType: file.type || "application/octet-stream",
