@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Phone, Mail, MapPin, Calendar, Briefcase, Wallet, FileText, CalendarCheck,
-  CalendarDays, Target, User, ShieldCheck, Award, Banknote, BookUser, Clock,
+  CalendarDays, Target, User, ShieldCheck, Award, Banknote, BookUser, Clock, Eye,
 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { useDashStore } from "./dash-store";
@@ -23,7 +23,6 @@ export function EmployeeDetail({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetch(`/api/employees/${id}`)
       .then((r) => r.json())
@@ -157,8 +156,29 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function PhotoCard({ label, url }: { label: string; url?: string }) {
+  if (!url) return null;
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      <p className="bg-muted px-3 py-1.5 text-[11px] font-semibold text-muted-foreground">{label}</p>
+      <div className="relative">
+        <img src={url} alt={label} className="h-40 w-full object-cover" />
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-2 end-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-[11px] font-medium text-white hover:bg-black/80"
+        >
+          <Eye className="h-3 w-3" /> View Full
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function ProfileTab({ data }: { data: any }) {
   const { t } = useLanguage();
+  const hasPhotos = data.iqamaPhoto || data.passportPhoto;
   return (
     <div>
       <Section title={t("det.personalInfo")}>
@@ -187,6 +207,17 @@ function ProfileTab({ data }: { data: any }) {
           <InfoRow icon={ShieldCheck} label={t("emp.visa")} value={data.visaType} />
         </div>
       </Section>
+
+      {/* Document Photos */}
+      {hasPhotos && (
+        <Section title={t("emp.section.photos")}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PhotoCard label={t("emp.iqamaPhoto")} url={data.iqamaPhoto} />
+            <PhotoCard label={t("emp.passportPhoto")} url={data.passportPhoto} />
+          </div>
+        </Section>
+      )}
+
       {data.notes && (
         <Section title={t("emp.notes")}>
           <p className="text-sm text-foreground whitespace-pre-line">{data.notes}</p>
@@ -238,7 +269,19 @@ function DocumentsTab({ data }: { data: any }) {
             <p className="truncate font-medium">{d.title}</p>
             <p className="truncate text-xs text-muted-foreground">{d.type} · {d.expiryDate ? new Date(d.expiryDate).toLocaleDateString() : "—"}</p>
           </div>
-          <StatusBadge status={d.status} />
+          <div className="flex items-center gap-2">
+            <StatusBadge status={d.status} />
+            {d.fileUrl && (
+              <a
+                href={d.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
+              >
+                <Eye className="h-3 w-3" /> View
+              </a>
+            )}
+          </div>
         </div>
       ))}
     </div>
