@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { readFile } from "fs/promises";
-import path from "path";
 
 const schema = z.object({
   imageUrl: z.string().min(1),
@@ -20,23 +18,25 @@ export async function POST(request: Request) {
     }
     const { imageUrl, type } = parsed.data;
 
-    // Read the image file from disk and convert to base64 data URL
-    let dataUrl = imageUrl;
-    
-    if (imageUrl.startsWith("data:")) {
-      // Already a data URL
-      dataUrl = imageUrl;
-    } else if (imageUrl.startsWith("/")) {
-      // Relative URL — read from disk
-      const filePath = path.join(process.cwd(), "public", imageUrl);
-      try {
-        const buffer = await readFile(filePath);
-        const ext = path.extname(imageUrl).toLowerCase();
-        const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : ext === ".gif" ? "image/gif" : "image/jpeg";
-        dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
-      } catch {
-        return NextResponse.json({ ok: false, error: "Image file not found on server" }, { status: 404 });
+    let base64Data: string;
+    let mimeType: string = "image/jpeg";
+
+    try {
+      if (imageUrl.startsWith("data:")) {
+        const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!match) throw new Error("Invalid data URL");
+        mimeType = match[1];
+        base64Data = match[2];
+      } else {
+        const imgRes = await fetch(imageUrl);
+        if (!imgRes.ok) throw new Error(`Failed to fetch image: ${imgRes.status}`);
+        const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+        mimeType = contentType.split(";")[0];
+        const buffer = await imgRes.arrayBuffer();
+        base64Data = Buffer.from(buffer).toString("base64");
       }
+    } catch (e: any) {
+      return NextResponse.json({ ok: false, error: `Could not load image: ${e.message}` }, { status: 400 });
     }
 
     const prompt = type === "iqama"
@@ -64,31 +64,49 @@ export async function POST(request: Request) {
   "placeOfIssue": "issuing country/authority if visible, else null"
 }`;
 
-    const ZAI = (await import("z-ai-web-dev-sdk")).default;
-    const zai = await ZAI.create();
-
-    const response = await zai.chat.completions.createVision({
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-      thinking: { type: "disabled" },
+    const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GLM_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "glm-4v-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${base64Data}`,
+                },
+              },
+              {
+                type: "text",
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        max_tokens: 1024,
+      }),
     });
 
-    const content = response.choices[0]?.message?.content || "";
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("[ai.extract] GLM API error:", err);
+      return NextResponse.json({ ok: false, error: "AI service error. Please try again." }, { status: 500 });
+    }
 
-    // Strip any markdown code fences
+    const aiData = await response.json();
+    const content = aiData.choices?.[0]?.message?.content || "";
+
     const cleaned = content.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
     let parsed_data: any = null;
     try {
       parsed_data = JSON.parse(cleaned);
     } catch {
-      // Try to find a JSON object inside
       const match = cleaned.match(/\{[\s\S]*\}/);
       if (match) {
         try { parsed_data = JSON.parse(match[0]); } catch {}
@@ -96,8 +114,9 @@ export async function POST(request: Request) {
     }
 
     if (!parsed_data) {
-      return NextResponse.json({ ok: false, error: "Could not parse extracted data", raw: content });
+      return NextResponse.json({ ok: false, error: "Could not extract data — please fill manually", raw: content });
     }
+
     return NextResponse.json({ ok: true, data: parsed_data });
   } catch (e: any) {
     console.error("[ai.extract.POST]", e?.message || e);
