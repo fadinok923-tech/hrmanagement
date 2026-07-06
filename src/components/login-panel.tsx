@@ -66,7 +66,6 @@ export function LoginPanel() {
       try {
         sessionStorage.setItem("tanoor-session", JSON.stringify({ user: data.user, at: Date.now() }));
       } catch {}
-      // Force reload to switch to dashboard
       window.location.reload();
     } catch {
       setError(t("login.err.invalid"));
@@ -299,17 +298,6 @@ export function LoginPanel() {
             </p>
           </motion.div>
 
-          {/* Demo hint */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-            className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400"
-          >
-            <ShieldCheck className="h-3 w-3" />
-            <span>{t("demo.hint")}</span>
-          </motion.div>
-
           {/* Secured by footer */}
           <div className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
             <ShieldCheck className="h-3 w-3" />
@@ -349,7 +337,6 @@ function ForgotPasswordDialog({
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
