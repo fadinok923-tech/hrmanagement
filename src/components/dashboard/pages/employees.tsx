@@ -626,114 +626,123 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Column definitions for the template
   const TEMPLATE_COLUMNS = [
-    "empNo", "name", "arabicName", "nationality", "gender", "maritalStatus",
-    "dob", "phone", "email", "address", "emergencyContact",
-    "iqamaNo", "passportNo", "sponsor", "visaType", "bankIban",
-    "jobTitle", "department", "hireDate", "basicSalary", "allowances",
+    "empNo", "fullName", "fullNameAr", "nationality", "gender", "dateOfBirth",
+    "maritalStatus", "phone", "email", "address", "emergencyContact",
+    "jobTitle", "department", "employmentType", "hireDate", "contractEnd",
+    "basicSalary", "allowances", "bankAccount", "iban",
+    "iqamaNo", "iqamaExpiry", "passportNo", "passportExpiry", "visaType",
+    "status", "notes",
   ];
 
-  // Download a sample Excel template
   function downloadTemplate() {
     const sampleData = [
       {
         empNo: "TAJ-100",
-        name: "Ahmed Mohammed Ali",
-        arabicName: "أحمد محمد علي",
+        fullName: "Ahmed Mohammed Ali",
+        fullNameAr: "أحمد محمد علي",
         nationality: "Saudi",
         gender: "male",
-        maritalStatus: "single",
         dateOfBirth: "1990-05-15",
-        phone: "0501234567",
+        maritalStatus: "single",
+        phone: "+966501234567",
         email: "ahmed@tanoor.sa",
-        address: "Riyadh, Saudi Arabia",
-        emergencyContact: "0509876543",
-        iqamaNo: "2001234567",
-        passportNo: "A12345678",
-        sponsor: "Tanoor Al Jazeera",
-        visaType: "Saudi National",
-        bankIban: "SA0380000000608012345678",
+        address: "Jeddah, Saudi Arabia",
+        emergencyContact: "+966509876543",
         jobTitle: "Production Operator",
         department: "Production",
+        employmentType: "full_time",
         hireDate: "2024-01-15",
+        contractEnd: "",
         basicSalary: 3500,
         allowances: 500,
+        bankAccount: "1234567890",
+        iban: "SA0380000000608012345678",
+        iqamaNo: "2001234567",
+        iqamaExpiry: "2025-12-31",
+        passportNo: "A12345678",
+        passportExpiry: "2028-06-30",
+        visaType: "Saudi National",
+        status: "active",
+        notes: "Reliable employee",
       },
       {
         empNo: "TAJ-101",
-        name: "Rajesh Kumar Sharma",
-        arabicName: "",
+        fullName: "Rajesh Kumar Sharma",
+        fullNameAr: "",
         nationality: "Indian",
         gender: "male",
-        maritalStatus: "married",
         dateOfBirth: "1988-03-20",
-        phone: "0534567890",
+        maritalStatus: "married",
+        phone: "+966534567890",
         email: "rajesh@tanoor.sa",
         address: "Dammam, Saudi Arabia",
-        emergencyContact: "0556789012",
-        iqamaNo: "2987654321",
-        passportNo: "P87654321",
-        sponsor: "Tanoor Al Jazeera",
-        visaType: "Iqama",
-        bankIban: "SA0380000000608098765432",
+        emergencyContact: "+966556789012",
         jobTitle: "Quality Inspector",
         department: "Quality Control",
+        employmentType: "full_time",
         hireDate: "2023-09-01",
+        contractEnd: "2025-09-01",
         basicSalary: 4200,
         allowances: 600,
+        bankAccount: "9876543210",
+        iban: "SA0380000000608098765432",
+        iqamaNo: "2987654321",
+        iqamaExpiry: "2026-03-15",
+        passportNo: "P87654321",
+        passportExpiry: "2029-01-20",
+        visaType: "Iqama",
+        status: "active",
+        notes: "",
       },
     ];
-
     const ws = XLSX.utils.json_to_sheet(sampleData, { header: TEMPLATE_COLUMNS });
-    // Auto-size columns
-    ws["!cols"] = TEMPLATE_COLUMNS.map((col) => ({ wch: Math.max(col.length, 15) }));
+    ws["!cols"] = TEMPLATE_COLUMNS.map((col) => ({ wch: Math.max(col.length + 4, 18) }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Employees");
     XLSX.writeFile(wb, "employee_import_template.xlsx");
     toast.success("Template downloaded");
   }
 
-  // Handle file upload (Excel only)
+  function toDateStr(val: any): string {
+    if (!val && val !== 0) return "";
+    if (typeof val === "number") {
+      const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+      return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+    }
+    const s = String(val).trim();
+    if (!s) return "";
+    const date = new Date(s);
+    return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+  }
+
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (ext !== "xlsx" && ext !== "xls") {
       toast.error("Please upload an Excel file (.xlsx or .xls)");
       e.target.value = "";
       return;
     }
-
     setFileName(file.name);
     setParsedRows([]);
-
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-      if (rows.length === 0) {
-        toast.error("No data found in the Excel file");
-        return;
-      }
-      // Filter out rows without a name
-      const valid = rows.filter((r) => r.name || r.fullName);
-      if (valid.length === 0) {
-        toast.error("No valid rows found. The file must have a 'name' column.");
-        return;
-      }
+      if (rows.length === 0) { toast.error("No data found in the Excel file"); return; }
+      const valid = rows.filter((r) => r.fullName || r.name);
+      if (valid.length === 0) { toast.error("No valid rows found. The file must have a 'fullName' column."); return; }
       setParsedRows(valid);
       toast.success(`${valid.length} rows parsed from Excel`);
-    } catch (err) {
+    } catch {
       toast.error("Failed to read Excel file. Make sure it's a valid .xlsx file.");
     }
     e.target.value = "";
   }
 
-  // Import parsed rows
   async function handleImport() {
     if (parsedRows.length === 0) return;
     setLoading(true);
@@ -741,57 +750,45 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
     let failed = 0;
 
     for (const row of parsedRows) {
-      // Map Excel columns to API schema — ensure required fields have values
-      const fullName = String(row.name || row.fullName || "").trim();
+      const fullName = String(row.fullName || row.name || "").trim();
       if (!fullName) { failed++; continue; }
 
       const empNo = String(row.empNo || row.empno || "").trim() || `TAJ-${Date.now()}-${count}`;
-
-      // Convert Excel date serial numbers to ISO strings
-      function toDateStr(val: any): string {
-        if (!val && val !== 0) return "";
-        if (typeof val === "number") {
-          // Excel serial date: days since 1900-01-01 (with leap year bug)
-          const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-          return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
-        }
-        const s = String(val).trim();
-        if (!s) return "";
-        const date = new Date(s);
-        return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
-      }
-
       const hireDateStr = toDateStr(row.hireDate || row.hiredate) || new Date().toISOString().slice(0, 10);
 
       const body: Record<string, unknown> = {
-        empNo: empNo,
-        fullName: fullName,
+        empNo,
+        fullName,
         nationality: String(row.nationality || "Saudi").trim() || "Saudi",
         gender: String(row.gender || "male").toLowerCase().trim() || "male",
-        jobTitle: String(row.jobTitle || row.jobtitle || row.job || "Staff").trim() || "Staff",
+        jobTitle: String(row.jobTitle || row.job || "Staff").trim() || "Staff",
         department: String(row.department || "Production").trim() || "Production",
         hireDate: hireDateStr,
-        basicSalary: Number(row.basicSalary || row.basicsalary || row.salary) || 0,
+        basicSalary: Number(row.basicSalary || row.salary) || 0,
         allowances: Number(row.allowances) || 0,
-        status: "active",
+        status: String(row.status || "active").trim() || "active",
       };
 
-      // Optional fields — only add if non-empty
-      const dobStr = toDateStr(row.dob || row.dateOfBirth);
-      const opt: Record<string, string | null> = {
-        arabicName: String(row.arabicName || row.arabicname || "").trim() || null,
-        dateOfBirth: dobStr || null,
-        maritalStatus: String(row.maritalStatus || row.maritalstatus || "").trim().toLowerCase() || null,
+      const opt: Record<string, any> = {
+        fullNameAr: String(row.fullNameAr || row.arabicName || "").trim() || null,
+        dateOfBirth: toDateStr(row.dateOfBirth || row.dob) || null,
+        maritalStatus: String(row.maritalStatus || "").trim().toLowerCase() || null,
         phone: String(row.phone || row.mobile || "").trim() || null,
         email: String(row.email || "").trim() || null,
         address: String(row.address || "").trim() || null,
-        emergencyContact: String(row.emergencyContact || row.emergencycontact || "").trim() || null,
-        iqamaNo: String(row.iqamaNo || row.iqamano || row.iqama || "").trim() || null,
-        passportNo: String(row.passportNo || row.passportno || "").trim() || null,
-        visaType: String(row.visaType || row.visatype || "").trim() || null,
-        bankAccount: String(row.bankIban || row.bankiban || row.iban || "").trim() || null,
+        emergencyContact: String(row.emergencyContact || "").trim() || null,
+        employmentType: String(row.employmentType || "full_time").trim() || "full_time",
+        contractEnd: toDateStr(row.contractEnd) || null,
+        bankAccount: String(row.bankAccount || "").trim() || null,
+        iban: String(row.iban || row.bankIban || "").trim() || null,
+        iqamaNo: String(row.iqamaNo || "").trim() || null,
+        iqamaExpiry: toDateStr(row.iqamaExpiry) || null,
+        passportNo: String(row.passportNo || "").trim() || null,
+        passportExpiry: toDateStr(row.passportExpiry) || null,
+        visaType: String(row.visaType || "").trim() || null,
+        notes: String(row.notes || "").trim() || null,
       };
-      for (const [k, v] of Object.entries(opt)) { if (v) body[k] = v; }
+      for (const [k, v] of Object.entries(opt)) { if (v !== null) body[k] = v; }
 
       try {
         const res = await fetch("/api/employees", {
@@ -800,52 +797,40 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
           body: JSON.stringify(body),
         });
         if (res.ok) count++;
-        else {
-          failed++;
-        }
+        else failed++;
       } catch { failed++; }
     }
 
     setLoading(false);
     if (count > 0) toast.success(`${count} employee${count > 1 ? "s" : ""} imported successfully`);
     if (failed > 0) toast.error(`${failed} row${failed > 1 ? "s" : ""} failed to import`);
-    if (count > 0) {
-      setParsedRows([]);
-      setFileName("");
-      onImported();
-    }
+    if (count > 0) { setParsedRows([]); setFileName(""); onImported(); }
   }
 
   return (
     <ModalShell open={open} onClose={onClose} title="Import Employees (Excel)" size="lg">
-      {/* Download Template */}
       <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
             <div>
               <p className="text-sm font-semibold text-slate-700">Download Sample Template</p>
-              <p className="text-xs text-slate-500">Excel file with all columns + 2 sample rows</p>
+              <p className="text-xs text-slate-500">Excel file with all 27 columns + 2 sample rows</p>
             </div>
           </div>
-          <button
-            onClick={downloadTemplate}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download
+          <button onClick={downloadTemplate} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700">
+            <Download className="h-3.5 w-3.5" /> Download
           </button>
         </div>
       </div>
 
-      {/* Upload Area */}
       <div
         onClick={() => fileRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5"); }}
-        onDragLeave={(e) => { e.currentTarget.classList.remove("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5"); }}
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-blue-400"); }}
+        onDragLeave={(e) => { e.currentTarget.classList.remove("border-blue-400"); }}
         onDrop={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.remove("border-[var(--color-brand-light)]", "bg-[var(--color-brand-light)]/5");
+          e.currentTarget.classList.remove("border-blue-400");
           const file = e.dataTransfer.files?.[0];
           if (file) {
             const ext = file.name.split(".").pop()?.toLowerCase();
@@ -855,14 +840,14 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
                 const wb = XLSX.read(buf, { type: "array" });
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-                const valid = rows.filter((r) => r.name || r.fullName);
+                const valid = rows.filter((r) => r.fullName || r.name);
                 if (valid.length > 0) { setParsedRows(valid); toast.success(`${valid.length} rows parsed`); }
-                else toast.error("No valid rows found (need 'name' column)");
+                else toast.error("No valid rows found (need 'fullName' column)");
               });
             } else { toast.error("Please upload .xlsx or .xls file"); }
           }
         }}
-        className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 transition hover:border-[var(--color-brand-light)] hover:bg-[var(--color-brand-light)]/5"
+        className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 transition hover:border-blue-400 hover:bg-blue-50/30"
       >
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} />
         <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-slate-400 shadow-sm">
@@ -878,42 +863,40 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         )}
       </div>
 
-      {/* Preview Table */}
       {parsedRows.length > 0 && (
         <div className="mt-4 max-h-48 overflow-auto rounded-lg border border-slate-100">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-slate-50">
               <tr>
                 <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Emp No</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Name</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Dept</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Full Name</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Department</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Job Title</th>
                 <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Salary</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Status</th>
               </tr>
             </thead>
             <tbody>
               {parsedRows.slice(0, 20).map((r, i) => (
                 <tr key={i} className="border-t border-slate-50">
-                  <td className="px-2 py-1.5 text-slate-600">{r.empNo || r.empno || "—"}</td>
-                  <td className="px-2 py-1.5 font-medium text-slate-800">{r.name || r.fullName || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.empNo || "—"}</td>
+                  <td className="px-2 py-1.5 font-medium text-slate-800">{r.fullName || r.name || "—"}</td>
                   <td className="px-2 py-1.5 text-slate-600">{r.department || "—"}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{r.basicSalary || r.basicsalary || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.jobTitle || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.basicSalary || "—"}</td>
+                  <td className="px-2 py-1.5 text-slate-600">{r.status || "active"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {parsedRows.length > 20 && (
-            <p className="bg-slate-50 px-2 py-1 text-center text-[11px] text-slate-400">
-              +{parsedRows.length - 20} more rows…
-            </p>
+            <p className="bg-slate-50 px-2 py-1 text-center text-[11px] text-slate-400">+{parsedRows.length - 20} more rows…</p>
           )}
         </div>
       )}
 
-      {/* Actions */}
       <div className="mt-4 flex items-center justify-end gap-2">
-        <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
-          Cancel
-        </button>
+        <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
         <button
           onClick={handleImport}
           disabled={loading || parsedRows.length === 0}
