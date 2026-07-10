@@ -80,11 +80,24 @@ export async function PUT(
     }
     const d: any = parsed.data;
     const data: any = { ...d };
+
+    // If empNo is being updated, check it's not taken by another employee
+    if (d.empNo) {
+      const existing = await db.employee.findFirst({
+        where: { empNo: d.empNo, NOT: { id } },
+      });
+      if (existing) {
+        // Remove empNo from update to avoid unique constraint error
+        delete data.empNo;
+      }
+    }
+
     if (d.hireDate) data.hireDate = new Date(d.hireDate);
     if (d.dateOfBirth !== undefined) data.dateOfBirth = d.dateOfBirth ? new Date(d.dateOfBirth) : null;
     if (d.contractEnd !== undefined) data.contractEnd = d.contractEnd ? new Date(d.contractEnd) : null;
     if (d.passportExpiry !== undefined) data.passportExpiry = d.passportExpiry ? new Date(d.passportExpiry) : null;
     if (d.iqamaExpiry !== undefined) data.iqamaExpiry = d.iqamaExpiry ? new Date(d.iqamaExpiry) : null;
+
     const employee = await db.employee.update({ where: { id }, data });
     return NextResponse.json({ ok: true, data: employee });
   } catch (e) {
@@ -106,3 +119,4 @@ export async function DELETE(
     return NextResponse.json({ ok: false, error: "Failed to delete" }, { status: 500 });
   }
 }
+
