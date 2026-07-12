@@ -18,7 +18,7 @@ import {
 import { exportToExcel } from "@/lib/excel";
 
 const DEPARTMENTS = ["Production", "Quality Control", "Maintenance", "Logistics", "Administration", "Sales"];
-const NATIONALITIES = ["Saudi", "Indian", "Egyptian", "Pakistani", "Filipino", "Bangladeshi"];
+const NATIONALITIES = ["Saudi", "Indian", "Egyptian", "Pakistani", "Yemen", "Bangladeshi"];
 const COLORS = ["#1e3a8a", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#0ea5e9", "#f97316"];
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
