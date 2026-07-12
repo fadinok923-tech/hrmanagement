@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       const overtimePay = Math.round(((emp.basicSalary / 30) / 8) * 1.5 * overtime * 100) / 100;
       const deductions = 0;
       const gosi = Math.round(emp.basicSalary * gosiRate * 100) / 100;
-      const net = Math.round((emp.basicSalary + emp.allowances + overtimePay - deductions - gosi) * 100) / 100;
+      const net = Math.round((emp.basicSalary + emp.allowances + overtimePay - deductions) * 100) / 100;
       const rec = await db.payroll.create({
         data: {
           employeeId: emp.id,
