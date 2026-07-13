@@ -391,4 +391,30 @@ function LeaveTab({ data }: { data: any }) {
       </Section>
     </div>
   );
+function PayrollTab({ data }: { data: any }) {
+  const { t } = useLanguage();
+  return (
+    <div>
+      <Section title={t("det.payroll")}>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <InfoRow icon={Wallet} label={t("emp.basicSalary")} value={formatSAR(data.basicSalary)} />
+          <InfoRow icon={Wallet} label={t("emp.allowances")} value={formatSAR(data.allowances)} />
+          <InfoRow icon={Award} label={t("det.totalSalary")} value={formatSAR(data.basicSalary + data.allowances)} />
+          <InfoRow icon={Banknote} label={t("emp.bank")} value={data.bankAccount} />
+          <InfoRow icon={Banknote} label={t("emp.iban")} value={data.iban} />
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function KpisTab({ data }: { data: any }) {
+  const { t } = useLanguage();
+  return (
+    <div>
+      <Section title="KPIs">
+        <EmptyState icon={<Target className="h-6 w-6" />} title="No KPI records yet" />
+      </Section>
+    </div>
+  );
 }
