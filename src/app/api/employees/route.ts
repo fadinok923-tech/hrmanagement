@@ -13,11 +13,12 @@ export async function GET(request: Request) {
     const where: any = {};
     if (search) {
       where.OR = [
-        { fullName: { contains: search } },
-        { empNo: { contains: search } },
-        { email: { contains: search } },
-        { phone: { contains: search } },
-        { jobTitle: { contains: search } },
+        { fullName: { contains: search, mode: "insensitive" } },
+        { empNo: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search, mode: "insensitive" } },
+        { jobTitle: { contains: search, mode: "insensitive" } },
+        { fullNameAr: { contains: search, mode: "insensitive" } },
       ];
     }
     if (department && department !== "all") where.department = department;
