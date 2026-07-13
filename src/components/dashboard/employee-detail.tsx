@@ -318,78 +318,77 @@ function AttendanceTab({ data }: { data: any }) {
 function LeaveTab({ data }: { data: any }) {
   const { t } = useLanguage();
   const leaves = data.leaves || [];
+
   if (leaves.length === 0) return <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />;
-  return (
-    <div className="space-y-2">
-      {leaves.map((l: any) => (
-        <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">{t(`leave.${l.type}`)} · {l.days} {t("det.days")}</p>
-            <StatusBadge status={l.status} />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">{new Date(l.startDate).toLocaleDateString()} → {new Date(l.endDate).toLocaleDateString()}</p>
-          {l.reason && <p className="mt-1 text-xs text-muted-foreground">{l.reason}</p>}
-        </div>
-      ))}
-    </div>
-  );
-}
 
-function PayrollTab({ data }: { data: any }) {
-  const { t } = useLanguage();
-  const pays = data.payrolls || [];
-  if (pays.length === 0) return <EmptyState icon={<Wallet className="h-6 w-6" />} title={t("det.noRecords")} />;
-  return (
-    <div className="space-y-2">
-      {pays.map((p: any) => (
-        <div key={p.id} className="rounded-lg border border-border bg-muted/20 p-3">
-          <div className="flex items-center justify-between">
-            <p className="font-mono text-sm font-medium">{p.month}</p>
-            <span className="font-bold text-foreground">{formatSAR(p.netSalary)}</span>
-          </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-            <span>{t("pay.basic")}: {formatSAR(p.basicSalary)}</span>
-            <span>{t("pay.allowances")}: {formatSAR(p.allowances)}</span>
-            <span>{t("pay.gosi")}: {formatSAR(p.gosi)}</span>
-          </div>
-        </div>
-      ))}
-    </div>
+  // Calculate leave balance for current year
+  const currentYear = new Date().getFullYear();
+  const yearLeaves = leaves.filter((l: any) => 
+    l.status === "approved" && new Date(l.startDate).getFullYear() === currentYear
   );
-}
 
-function KpisTab({ data }: { data: any }) {
-  const { t } = useLanguage();
-  const kpis = data.kpis || [];
-  if (kpis.length === 0) return <EmptyState icon={<Target className="h-6 w-6" />} title={t("det.noRecords")} />;
+  function usedDays(type: string) {
+    return yearLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
+  }
+
+  // Casual leave — weekly entitlement * 52 weeks
+  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 52;
+
+  const balances = [
+    { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
+    { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
+    { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
+    { type: "maternity", label: "Maternity Leave", entitled: data.leaveMaternity ?? 70, color: "#8b5cf6" },
+    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/week)`, entitled: casualEntitlement, color: "#0ea5e9" },
+  ];
+
   return (
-    <div className="space-y-2">
-      {kpis.map((k: any) => {
-        const color = k.finalScore >= 85 ? "#10b981" : k.finalScore >= 75 ? "#3b82f6" : k.finalScore >= 70 ? "#f59e0b" : "#ef4444";
-        return (
-          <div key={k.id} className="rounded-lg border border-border bg-muted/20 p-3">
-            <div className="flex items-center justify-between">
-              <p className="font-mono text-sm font-medium">{k.period}</p>
-              <span className="font-bold" style={{ color }}>{k.finalScore}</span>
-            </div>
-            <div className="mt-2 grid grid-cols-5 gap-1 text-center text-[10px]">
-              {[
-                { k: "productivity", v: k.productivity },
-                { k: "quality", v: k.quality },
-                { k: "teamwork", v: k.teamwork },
-                { k: "punctuality", v: k.punctuality },
-                { k: "initiative", v: k.initiative },
-              ].map((m) => (
-                <div key={m.k}>
-                  <p className="font-semibold text-foreground">{m.v}</p>
-                  <p className="text-muted-foreground">{t(`kpi.${m.k}`).slice(0, 4)}</p>
+    <div className="space-y-4">
+      {/* Leave Balance Section */}
+      <Section title={`Leave Balance — ${currentYear}`}>
+        <div className="space-y-3">
+          {balances.map((b) => {
+            const used = usedDays(b.type);
+            const remaining = Math.max(0, b.entitled - used);
+            const pct = b.entitled > 0 ? Math.min(100, (used / b.entitled) * 100) : 0;
+            return (
+              <div key={b.type}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{b.label}</span>
+                  <span className="text-muted-foreground">
+                    <span className="font-semibold text-foreground">{remaining}</span> / {b.entitled} days remaining
+                  </span>
                 </div>
-              ))}
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : b.color }}
+                  />
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">{used} days used this year</p>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Leave History */}
+      <Section title="Leave History">
+        <div className="space-y-2">
+          {leaves.map((l: any) => (
+            <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium capitalize">{l.type} Leave · {l.days} days</p>
+                <StatusBadge status={l.status} />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {new Date(l.startDate).toLocaleDateString()} → {new Date(l.endDate).toLocaleDateString()}
+              </p>
+              {l.reason && <p className="mt-1 text-xs text-muted-foreground">{l.reason}</p>}
             </div>
-            {k.comments && <p className="mt-2 text-xs text-muted-foreground">{k.comments}</p>}
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      </Section>
     </div>
   );
 }

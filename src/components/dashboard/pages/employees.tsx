@@ -328,6 +328,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
       visaType: "Saudi National", status: "active", notes: "",
+      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveMaternity: 70, leaveCasualPerWeek: 1,
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
   }, [open, editing]);
@@ -505,6 +506,28 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
                 <option value="on_leave">{t("emp.onLeave")}</option>
                 <option value="terminated">Terminated</option>
               </select>
+            </Field>
+          </div>
+        </section>
+
+        {/* Leave Entitlements */}
+        <section>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlements (Days/Year)</h4>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Field label="Annual Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveAnnual ?? 21} onChange={(e) => set("leaveAnnual", Number(e.target.value))} />
+            </Field>
+            <Field label="Sick Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveSick ?? 30} onChange={(e) => set("leaveSick", Number(e.target.value))} />
+            </Field>
+            <Field label="Emergency Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
+            </Field>
+            <Field label="Maternity Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveMaternity ?? 70} onChange={(e) => set("leaveMaternity", Number(e.target.value))} />
+            </Field>
+            <Field label="Casual Leave (days/week)">
+              <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
             </Field>
           </div>
         </section>
@@ -787,6 +810,11 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         passportExpiry: toDateStr(row.passportExpiry) || null,
         visaType: String(row.visaType || "").trim() || null,
         notes: String(row.notes || "").trim() || null,
+        leaveAnnual: row.leaveAnnual != null ? Number(row.leaveAnnual) : null,
+        leaveSick: row.leaveSick != null ? Number(row.leaveSick) : null,
+        leaveEmergency: row.leaveEmergency != null ? Number(row.leaveEmergency) : null,
+        leaveMaternity: row.leaveMaternity != null ? Number(row.leaveMaternity) : null,
+        leaveCasualPerWeek: row.leaveCasualPerWeek != null ? Number(row.leaveCasualPerWeek) : null,
       };
       for (const [k, v] of Object.entries(opt)) { if (v !== null) body[k] = v; }
 

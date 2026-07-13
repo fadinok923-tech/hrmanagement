@@ -70,6 +70,11 @@ const employeeSchema = z.object({
   passportPhoto: z.string().optional().nullable(),
   avatarColor: z.string().optional(),
   notes: z.string().optional().nullable(),
+  leaveAnnual: z.coerce.number().optional().default(21),
+  leaveSick: z.coerce.number().optional().default(30),
+  leaveEmergency: z.coerce.number().optional().default(3),
+  leaveMaternity: z.coerce.number().optional().default(70),
+  leaveCasualPerWeek: z.coerce.number().optional().default(1),
 }).passthrough();
 
 export async function POST(request: Request) {
@@ -138,6 +143,11 @@ export async function POST(request: Request) {
         passportPhoto: d.passportPhoto ?? null,
         avatarColor: d.avatarColor || "#1e3a8a",
         notes: d.notes ?? null,
+        leaveAnnual: d.leaveAnnual ?? 21,
+        leaveSick: d.leaveSick ?? 30,
+        leaveEmergency: d.leaveEmergency ?? 3,
+        leaveMaternity: d.leaveMaternity ?? 70,
+        leaveCasualPerWeek: d.leaveCasualPerWeek ?? 1,
       },
     });
     return NextResponse.json({ ok: true, data: employee });

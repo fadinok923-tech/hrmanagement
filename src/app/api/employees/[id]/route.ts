@@ -60,6 +60,11 @@ const updateSchema = z.object({
   passportPhoto: z.string().optional().nullable(),
   avatarColor: z.string().optional(),
   notes: z.string().optional().nullable(),
+  leaveAnnual: z.coerce.number().optional().default(21),
+  leaveSick: z.coerce.number().optional().default(30),
+  leaveEmergency: z.coerce.number().optional().default(3),
+  leaveMaternity: z.coerce.number().optional().default(70),
+  leaveCasualPerWeek: z.coerce.number().optional().default(1),
 });
 
 export async function PUT(
