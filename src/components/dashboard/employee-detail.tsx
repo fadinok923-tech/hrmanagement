@@ -335,7 +335,6 @@ function LeaveTab({ data }: { data: any }) {
     { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
     { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
     { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
-    { type: "maternity", label: "Maternity Leave", entitled: data.leaveMaternity ?? 70, color: "#8b5cf6" },
     { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/week)`, entitled: casualEntitlement, color: "#0ea5e9" },
   ];
 

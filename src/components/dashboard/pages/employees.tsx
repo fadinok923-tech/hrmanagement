@@ -328,7 +328,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
       visaType: "Saudi National", status: "active", notes: "",
-      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveMaternity: 70, leaveCasualPerWeek: 1,
+      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveCasualPerWeek: 1,
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
   }, [open, editing]);
@@ -813,7 +813,6 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         leaveAnnual: row.leaveAnnual != null ? Number(row.leaveAnnual) : null,
         leaveSick: row.leaveSick != null ? Number(row.leaveSick) : null,
         leaveEmergency: row.leaveEmergency != null ? Number(row.leaveEmergency) : null,
-        leaveMaternity: row.leaveMaternity != null ? Number(row.leaveMaternity) : null,
         leaveCasualPerWeek: row.leaveCasualPerWeek != null ? Number(row.leaveCasualPerWeek) : null,
       };
       for (const [k, v] of Object.entries(opt)) { if (v !== null) body[k] = v; }

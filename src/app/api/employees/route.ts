@@ -74,7 +74,6 @@ const employeeSchema = z.object({
   leaveAnnual: z.coerce.number().optional().default(21),
   leaveSick: z.coerce.number().optional().default(30),
   leaveEmergency: z.coerce.number().optional().default(3),
-  leaveMaternity: z.coerce.number().optional().default(70),
   leaveCasualPerWeek: z.coerce.number().optional().default(1),
 }).passthrough();
 
@@ -147,7 +146,6 @@ export async function POST(request: Request) {
         leaveAnnual: d.leaveAnnual ?? 21,
         leaveSick: d.leaveSick ?? 30,
         leaveEmergency: d.leaveEmergency ?? 3,
-        leaveMaternity: d.leaveMaternity ?? 70,
         leaveCasualPerWeek: d.leaveCasualPerWeek ?? 1,
       },
     });

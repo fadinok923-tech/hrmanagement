@@ -58,7 +58,6 @@ model Employee {
   leaveAnnual        Int   @default(21)
   leaveSick          Int   @default(30)
   leaveEmergency     Int   @default(3)
-  leaveMaternity     Int   @default(70)
   leaveCasualPerWeek Int   @default(1)
 
   createdAt DateTime @default(now())

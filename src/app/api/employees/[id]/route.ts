@@ -63,7 +63,6 @@ const updateSchema = z.object({
   leaveAnnual: z.coerce.number().optional().default(21),
   leaveSick: z.coerce.number().optional().default(30),
   leaveEmergency: z.coerce.number().optional().default(3),
-  leaveMaternity: z.coerce.number().optional().default(70),
   leaveCasualPerWeek: z.coerce.number().optional().default(1),
 });
 

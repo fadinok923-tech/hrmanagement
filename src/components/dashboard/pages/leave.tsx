@@ -9,7 +9,7 @@ import { DataTable, type Column } from "../data-table";
 import { ConfirmDialog } from "../confirm-dialog";
 import { normalizeLeaveList, type NormalLeave } from "../api-helpers";
 
-const TYPES = ["annual", "sick", "emergency", "unpaid", "maternity", "casual"];
+const TYPES = ["annual", "sick", "emergency", "unpaid", "casual"];
 
 export function LeavePage() {
   const { t } = useLanguage();
