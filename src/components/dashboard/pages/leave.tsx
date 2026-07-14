@@ -180,7 +180,7 @@ function ApplyModal({ open, onClose, employees, onSaved }: {
 }) {
   const { t } = useLanguage();
   const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({ employeeId: "", type: "annual", startDate: today, endDate: today, reason: "" });
+  const [form, setForm] = useState({ employeeId: "", type: "annual", startDate: today, endDate: today, reason: "", days: 1 });
   const [saving, setSaving] = useState(false);
 
   function set(k: string, v: any) { setForm((f) => ({ ...f, [k]: v })); }
@@ -190,7 +190,7 @@ function ApplyModal({ open, onClose, employees, onSaved }: {
     if (!form.employeeId) { toast.error("Select an employee"); return; }
     setSaving(true);
     try {
-      const days = Math.max(1, Math.ceil((new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) / (24 * 60 * 60 * 1000)) + 1);
+      const days = form.days || 0.5;
       const res = await fetch("/api/leave", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -225,14 +225,25 @@ function ApplyModal({ open, onClose, employees, onSaved }: {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("leave.startDate")}</label>
-            <input type="date" className={inputCls} value={form.startDate} onChange={(e) => set("startDate", e.target.value)} />
+            <input type="date" className={inputCls} value={form.startDate} onChange={(e) => {
+              set("startDate", e.target.value);
+              const diff = Math.max(0.5, Math.ceil((new Date(form.endDate).getTime() - new Date(e.target.value).getTime()) / (24 * 60 * 60 * 1000)) + 1);
+              set("days", diff);
+            }} />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("leave.endDate")}</label>
-            <input type="date" className={inputCls} value={form.endDate} onChange={(e) => set("endDate", e.target.value)} />
+            <input type="date" className={inputCls} value={form.endDate} onChange={(e) => {
+              set("endDate", e.target.value);
+              const diff = Math.max(0.5, Math.ceil((new Date(e.target.value).getTime() - new Date(form.startDate).getTime()) / (24 * 60 * 60 * 1000)) + 1);
+              set("days", diff);
+            }} />
           </div>
         </div>
         <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">Number of Days <span className="text-slate-400">(e.g. 0.5 for half day, 2 for two days)</span></label>
+          <input type="number" min={0.5} step={0.5} className={inputCls} value={form.days} onChange={(e) => set("days", parseFloat(e.target.value) || 0.5)} />
+        </div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("leave.reason")}</label>
           <textarea rows={3} className="tanoor-input w-full rounded-lg border border-input bg-background p-3 text-sm focus:outline-none" value={form.reason} onChange={(e) => set("reason", e.target.value)} />
         </div>
