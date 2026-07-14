@@ -14,7 +14,7 @@ const TYPES = ["annual", "sick", "emergency", "unpaid", "maternity", "casual"];
 export function LeavePage() {
   const { t } = useLanguage();
   const [list, setList] = useState<NormalLeave[]>([]);
-  const [employees, setEmployees] = useState<{ id: string; fullName: string; empNo: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; fullName: string; empNo: string; leaveAnnual: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -39,7 +39,7 @@ export function LeavePage() {
 
   useEffect(() => {
     fetch("/api/employees").then((r) => r.json()).then((d) => {
-      if (d.ok) setEmployees(d.data.map((e: any) => ({ id: e.id, fullName: e.fullName, empNo: e.empNo })));
+      if (d.ok) setEmployees(d.data.map((e: any) => ({ id: e.id, fullName: e.fullName, empNo: e.empNo, leaveAnnual: e.leaveAnnual ?? 21 })));
     });
   }, []);
 
@@ -55,6 +55,16 @@ export function LeavePage() {
     approvedDays: list.filter((l) => l.status === "approved").reduce((s, l) => s + l.days, 0),
   }), [list]);
 
+const balanceMap = useMemo(() => {
+  const map: Record<string, number> = {};
+  employees.forEach((e) => {
+    const used = list
+      .filter((l) => l.employeeId === e.id && l.type === "annual" && l.status === "approved")
+      .reduce((s, l) => s + l.days, 0);
+    map[e.id] = e.leaveAnnual - used;
+  });
+  return map;
+}, [list, employees]);
   async function act(id: string, status: "approved" | "rejected") {
     const res = await fetch(`/api/leave/${id}`, {
       method: "PUT",
@@ -70,7 +80,7 @@ export function LeavePage() {
     }
   }
 
-  const columns: Column<NormalLeave>[] = [
+ const columns: Column<NormalLeave>[] = [
     { key: "employee", header: t("pay.employee"), render: (l) => (
       <div className="min-w-0">
         <p className="truncate font-medium">{l.employeeName}</p>
@@ -81,6 +91,10 @@ export function LeavePage() {
     { key: "startDate", header: t("leave.startDate"), render: (l) => <span className="font-mono text-xs">{l.startDate}</span> },
     { key: "endDate", header: t("leave.endDate"), render: (l) => <span className="font-mono text-xs">{l.endDate}</span> },
     { key: "days", header: t("leave.days"), align: "center", render: (l) => l.days },
+    { key: "balance", header: "Balance", align: "center", render: (l) => {
+      const bal = balanceMap[l.employeeId];
+      return bal !== undefined ? <span className={bal < 0 ? "text-red-600 font-semibold" : ""}>{bal}</span> : "—";
+    }},
     { key: "reason", header: t("leave.reason"), render: (l) => <span className="truncate text-xs text-muted-foreground">{l.reason || "—"}</span> },
     { key: "status", header: t("dash.status"), render: (l) => <StatusBadge status={l.status} /> },
   ];
@@ -176,7 +190,7 @@ export function LeavePage() {
 }
 
 function ApplyModal({ open, onClose, employees, onSaved }: {
-  open: boolean; onClose: () => void; employees: { id: string; fullName: string; empNo: string }[]; onSaved: () => void;
+  open: boolean; onClose: () => void; employees: { id: string; fullName: string; empNo: string; leaveAnnual: number }[]; onSaved: () => void;
 }) {
   const { t } = useLanguage();
   const today = new Date().toISOString().slice(0, 10);
