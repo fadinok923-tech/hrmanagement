@@ -242,8 +242,9 @@ function ApplyModal({ open, onClose, employees, onSaved }: {
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Number of Days <span className="text-slate-400">(e.g. 0.5 for half day, 2 for two days)</span></label>
-          <input type="number" min={0.5} step={0.5} className={inputCls} value={form.days} onChange={(e) => set("days", parseFloat(e.target.value) || 0.5)} />
+          <input type="number" min={0.01} step={0.01} className={inputCls} value={form.days} onChange={(e) => set("days", parseFloat(e.target.value) || 0.01)} />
         </div>
+        <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("leave.reason")}</label>
           <textarea rows={3} className="tanoor-input w-full rounded-lg border border-input bg-background p-3 text-sm focus:outline-none" value={form.reason} onChange={(e) => set("reason", e.target.value)} />
         </div>
