@@ -523,7 +523,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
             <Field label="Emergency Leave (days)">
               <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
             </Field>
-            <Field label="Casual Leave (days/week)">
+            <Field label="Casual Leave (days/month)">
               <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
             </Field>
           </div>
