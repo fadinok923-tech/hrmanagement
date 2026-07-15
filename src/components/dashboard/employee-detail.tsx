@@ -321,22 +321,54 @@ function LeaveTab({ data }: { data: any }) {
   if (leaves.length === 0) return <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />;
 
   const currentYear = new Date().getFullYear();
-  const yearLeaves = leaves.filter((l: any) => 
-    l.status === "approved" && new Date(l.startDate).getFullYear() === currentYear
-  );
+  const approvedLeaves = leaves.filter((l: any) => l.status === "approved");
+  const yearLeaves = approvedLeaves.filter((l: any) => new Date(l.startDate).getFullYear() === currentYear);
 
-  function usedDays(type: string | string[]) {
+  // Years of service since hire date (fractional, for accrual)
+  const hireDate = data.hireDate ? new Date(data.hireDate) : new Date();
+  const now = new Date();
+  const yearsOfService = Math.max(0, (now.getTime() - hireDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+
+  function usedDaysAllTime(type: string | string[]) {
+    const types = Array.isArray(type) ? type : [type];
+    return approvedLeaves.filter((l: any) => types.includes(l.type)).reduce((s: number, l: any) => s + (l.days || 0), 0);
+  }
+
+  function usedDaysThisYear(type: string | string[]) {
     const types = Array.isArray(type) ? type : [type];
     return yearLeaves.filter((l: any) => types.includes(l.type)).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
   const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 12;
-  const combinedAnnualEntitlement = (data.leaveAnnual ?? 21) + casualEntitlement;
+  const annualCasualPerYear = (data.leaveAnnual ?? 21) + casualEntitlement;
+  // Accumulated (carry-over, unlimited) — full years of service × entitlement, no reset
+  const annualCasualEarned = annualCasualPerYear * yearsOfService;
 
   const balances = [
-    { type: ["annual", "casual"], label: "Annual Leave (incl. Casual)", entitled: combinedAnnualEntitlement, color: "#3b82f6" },
-    { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
-    { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
+    {
+      type: ["annual", "casual"] as string | string[],
+      label: "Annual Leave (incl. Casual, carries over)",
+      entitled: Math.round(annualCasualEarned),
+      used: usedDaysAllTime(["annual", "casual"]),
+      color: "#3b82f6",
+      carryOver: true,
+    },
+    {
+      type: "sick" as string | string[],
+      label: "Sick Leave",
+      entitled: data.leaveSick ?? 30,
+      used: usedDaysThisYear("sick"),
+      color: "#10b981",
+      carryOver: false,
+    },
+    {
+      type: "emergency" as string | string[],
+      label: "Emergency Leave",
+      entitled: data.leaveEmergency ?? 3,
+      used: usedDaysThisYear("emergency"),
+      color: "#f59e0b",
+      carryOver: false,
+    },
   ];
 
   return (
@@ -344,7 +376,7 @@ function LeaveTab({ data }: { data: any }) {
       <Section title={`Leave Balance — ${currentYear}`}>
         <div className="space-y-3">
           {balances.map((b) => {
-            const used = usedDays(b.type);
+            const used = b.used;
             const remaining = Math.max(0, b.entitled - used);
             const pct = b.entitled > 0 ? Math.min(100, (used / b.entitled) * 100) : 0;
             return (
