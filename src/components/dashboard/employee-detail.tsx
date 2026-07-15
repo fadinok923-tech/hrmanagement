@@ -374,22 +374,25 @@ function LeaveTab({ data }: { data: any }) {
               </div>
             );
           })}
-
-          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-medium text-foreground">Available Leave</span>
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{Math.max(0, availableLeaveEntitled - availableLeaveUsed)}</span> / {availableLeaveEntitled} days remaining
-              </span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full transition-all"
-                style={{ width: `${availableLeaveEntitled > 0 ? Math.min(100, (availableLeaveUsed / availableLeaveEntitled) * 100) : 0}%`, background: "#8b5cf6" }}
-              />
-            </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">{availableLeaveUsed} days used since hire date</p>
-          </div>
+          {(() => {
+            const annualBalance = Math.max(0, (data.leaveAnnual ?? 21) - usedDays("annual"));
+            const casualBalance = Math.max(0, casualEntitlement - usedDays("casual"));
+            const availableTotal = annualBalance + casualBalance;
+            return (
+              <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">Available Leave (Annual + Casual)</span>
+                  <span className="font-semibold text-foreground">{availableTotal} days</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {annualBalance} annual + {casualBalance} casual remaining
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </Section>
 
