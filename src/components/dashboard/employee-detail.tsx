@@ -381,7 +381,7 @@ function LeaveTab({ data }: { data: any }) {
             return (
               <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
                 <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground">Available Leave (Annual + Casual)</span>
+                  <span className="font-medium text-foreground">Available Leave</span>
                   <span className="font-semibold text-foreground">{availableTotal} days</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
