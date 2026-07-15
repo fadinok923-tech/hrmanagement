@@ -55,10 +55,10 @@ model Employee {
   notes            String?
 
   // Leave Entitlements (admin can override defaults)
-  leaveAnnual          Int   @default(21)
-  leaveSick            Int   @default(30)
-  leaveEmergency       Int   @default(3)
-  leaveCasualPerMonth  Int   @default(4)
+  leaveAnnual        Int   @default(21)
+  leaveSick          Int   @default(30)
+  leaveEmergency     Int   @default(3)
+  leaveCasualPerWeek Int   @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -17,7 +17,7 @@ import {
 } from "../api-helpers";
 import { exportToExcel } from "@/lib/excel";
 
-const DEPARTMENTS = ["Production", "Quality Control", "Maintenance", "Logistics", "Administration", "Sales", "Van Drivers"];
+const DEPARTMENTS = ["Production", "Quality Control", "Maintenance", "Logistics", "Administration", "Sales"];
 const NATIONALITIES = ["Saudi", "Indian", "Egyptian", "Pakistani", "Yemen", "Bangladeshi"];
 const COLORS = ["#1e3a8a", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#0ea5e9", "#f97316"];
 
@@ -45,7 +45,6 @@ export function EmployeesPage() {
   const [dept, setDept] = useState("all");
   const [status, setStatus] = useState("all");
   const [nat, setNat] = useState("all");
-  const [visa, setVisa] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<NormalEmployee | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -60,7 +59,6 @@ export function EmployeesPage() {
       if (dept !== "all") params.set("department", dept);
       if (status !== "all") params.set("status", status);
       if (nat !== "all") params.set("nationality", nat);
-      if (visa !== "all") params.set("visaType", visa);
       const res = await fetch(`/api/employees?${params}`);
       const d = await res.json();
       if (d.ok) setList(normalizeEmployeeList(d.data));
@@ -73,7 +71,7 @@ export function EmployeesPage() {
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
      
-  }, [search, dept, status, nat, visa]);
+  }, [search, dept, status, nat]);
 
   const stats = useMemo(() => {
     const total = list.length;
@@ -198,14 +196,6 @@ export function EmployeesPage() {
           options={[{ value: "all", label: t("dash.all") }, ...DEPARTMENTS.map((d) => ({ value: d, label: d }))]} />
         <FilterSelect value={nat} onChange={setNat} className="w-32"
           options={[{ value: "all", label: t("dash.all") }, ...NATIONALITIES.map((n) => ({ value: n, label: n }))]} />
-        <FilterSelect value={visa} onChange={setVisa} className="w-36"
-          options={[
-            { value: "all", label: t("dash.all") },
-            { value: "Saudi National", label: "Saudi National" },
-            { value: "COMPANY VISA", label: "Company Visa" },
-            { value: "EXTERNAL VISA", label: "External Visa" },
-            { value: "Iqama", label: "Iqama" },
-          ]} />
         <FilterSelect value={status} onChange={setStatus} className="w-32"
           options={[
             { value: "all", label: t("dash.all") },
@@ -323,17 +313,11 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
   const [extractingIqama, setExtractingIqama] = useState(false);
   const [extractingPassport, setExtractingPassport] = useState(false);
   const initialized = useRef(false);
-  const editingKey = editing?.id ?? "new";
 
   useEffect(() => {
-    if (!open) {
-      initialized.current = false;
-      return;
-    }
-
-    if (initialized.current && editingKey === "new") return;
+    if (!open) { initialized.current = false; return; }
+    if (initialized.current) return; // Only init once when modal opens
     initialized.current = true;
-
     if (editing) setForm({ ...editing });
     else setForm({
       empNo: `TAJ-${String(Math.floor(Math.random() * 9000) + 1000)}`,
@@ -344,10 +328,10 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
       visaType: "Saudi National", status: "active", notes: "",
-      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveMaternity: 70, leaveCasualPerMonth: 4,
+      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveCasualPerWeek: 1,
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
-  }, [open, editingKey]);
+  }, [open, editing]);
 
   function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
 
@@ -539,8 +523,8 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
             <Field label="Emergency Leave (days)">
               <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
             </Field>
-            <Field label="Casual Leave (days/month)">
-              <input type="number" min={0} max={31} className={inputCls} value={form.leaveCasualPerMonth ?? 4} onChange={(e) => set("leaveCasualPerMonth", Number(e.target.value))} />
+            <Field label="Casual Leave (days/week)">
+              <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
             </Field>
           </div>
         </section>
@@ -826,7 +810,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         leaveAnnual: row.leaveAnnual != null ? Number(row.leaveAnnual) : null,
         leaveSick: row.leaveSick != null ? Number(row.leaveSick) : null,
         leaveEmergency: row.leaveEmergency != null ? Number(row.leaveEmergency) : null,
-        leaveCasualPerMonth: row.leaveCasualPerMonth != null ? Number(row.leaveCasualPerMonth) : null,
+        leaveCasualPerWeek: row.leaveCasualPerWeek != null ? Number(row.leaveCasualPerWeek) : null,
       };
       for (const [k, v] of Object.entries(opt)) { if (v !== null) body[k] = v; }
 

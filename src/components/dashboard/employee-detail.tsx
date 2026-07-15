@@ -329,13 +329,13 @@ function LeaveTab({ data }: { data: any }) {
     return yearLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
-  const casualEntitlement = (data.leaveCasualPerMonth ?? 4) * 12;
+  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 52;
 
   const balances = [
     { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
     { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
     { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
-    { type: "casual", label: `Casual Leave (${data.leaveCasualPerMonth ?? 4}/month)`, entitled: casualEntitlement, color: "#0ea5e9" },
+    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/week)`, entitled: casualEntitlement, color: "#0ea5e9" },
   ];
 
   return (
