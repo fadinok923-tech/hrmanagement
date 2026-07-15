@@ -55,6 +55,7 @@ const employeeSchema = z.object({
   department: z.string().optional().default("Production"),
   employmentType: z.string().optional(),
   hireDate: z.string().optional().nullable().default(() => new Date().toISOString().slice(0, 10)),
+  activeDate: z.string().optional().nullable(),
   contractEnd: z.string().optional().nullable(),
   basicSalary: z.coerce.number().optional().default(0),
   allowances: z.coerce.number().optional().default(0),
@@ -114,6 +115,11 @@ export async function POST(request: Request) {
           if (!d.hireDate || !String(d.hireDate).trim()) return new Date();
           const date = new Date(d.hireDate);
           return isNaN(date.getTime()) ? new Date() : date;
+        })(),
+        activeDate: (() => {
+          if (!d.activeDate || !String(d.activeDate).trim()) return null;
+          const date = new Date(d.activeDate);
+          return isNaN(date.getTime()) ? null : date;
         })(),
         contractEnd: (() => {
           if (!d.contractEnd || !String(d.contractEnd).trim()) return null;

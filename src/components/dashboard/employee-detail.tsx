@@ -322,7 +322,7 @@ function LeaveTab({ data }: { data: any }) {
 
   const approvedLeaves = leaves.filter((l: any) => l.status === "approved");
 
-  const hireDate = data.hireDate ? new Date(data.hireDate) : new Date();
+  const hireDate = data.activeDate ? new Date(data.activeDate) : (data.hireDate ? new Date(data.hireDate) : new Date());
   const now = new Date();
   const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
 

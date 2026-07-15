@@ -324,7 +324,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       fullName: "", fullNameAr: "", nationality: "Saudi", gender: "male",
       dateOfBirth: "", maritalStatus: "single", phone: "", email: "",
       address: "", emergencyContact: "", jobTitle: "", department: "Production",
-      employmentType: "full_time", hireDate: todayISO(), contractEnd: "",
+      employmentType: "full_time", hireDate: todayISO(), activeDate: "", contractEnd: "",
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
       visaType: "Saudi National", status: "active", notes: "",
@@ -496,6 +496,9 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
             </Field>
             <Field label={t("emp.hireDate")} required>
               <input type="date" className={inputCls} value={form.hireDate || ""} onChange={(e) => set("hireDate", e.target.value)} required />
+            </Field>
+            <Field label="Active Date (for leave accrual)">
+              <input type="date" className={inputCls} value={form.activeDate || ""} onChange={(e) => set("activeDate", e.target.value)} />
             </Field>
             <Field label={t("emp.contractEnd")}>
               <input type="date" className={inputCls} value={form.contractEnd || ""} onChange={(e) => set("contractEnd", e.target.value)} />

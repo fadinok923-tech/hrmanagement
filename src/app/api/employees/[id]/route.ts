@@ -44,6 +44,7 @@ const updateSchema = z.object({
   department: z.string().min(1).optional(),
   employmentType: z.string().optional(),
   hireDate: z.string().optional(),
+  activeDate: z.string().optional().nullable(),
   contractEnd: z.string().optional().nullable(),
   basicSalary: z.coerce.number().optional(),
   allowances: z.coerce.number().optional(),
@@ -97,6 +98,7 @@ export async function PUT(
     }
 
     if (d.hireDate) data.hireDate = new Date(d.hireDate);
+    if (d.activeDate !== undefined) data.activeDate = d.activeDate ? new Date(d.activeDate) : null;
     if (d.dateOfBirth !== undefined) data.dateOfBirth = d.dateOfBirth ? new Date(d.dateOfBirth) : null;
     if (d.contractEnd !== undefined) data.contractEnd = d.contractEnd ? new Date(d.contractEnd) : null;
     if (d.passportExpiry !== undefined) data.passportExpiry = d.passportExpiry ? new Date(d.passportExpiry) : null;

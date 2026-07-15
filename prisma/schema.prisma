@@ -37,6 +37,7 @@ model Employee {
   department       String
   employmentType   String       @default("full_time")
   hireDate         DateTime
+  activeDate       DateTime?
   contractEnd      DateTime?
   basicSalary      Float        @default(0)
   allowances       Float        @default(0)

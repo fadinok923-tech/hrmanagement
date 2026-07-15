@@ -19,6 +19,7 @@ export interface NormalEmployee {
   department: string;
   employmentType: string;
   hireDate: string | null;
+  activeDate: string | null;
   contractEnd: string | null;
   basicSalary: number;
   allowances: number;
@@ -193,6 +194,7 @@ export function normalizeEmployee(e: any): NormalEmployee {
     department: e.department || "",
     employmentType: e.employmentType || "full_time",
     hireDate: dateOnly(e.hireDate),
+    activeDate: dateOnly(e.activeDate),
     contractEnd: dateOnly(e.contractEnd),
     basicSalary: Number(e.basicSalary) || 0,
     allowances: Number(e.allowances) || 0,
