@@ -321,6 +321,7 @@ function LeaveTab({ data }: { data: any }) {
   if (leaves.length === 0) return <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />;
 
   const currentYear = new Date().getFullYear();
+  const currentYear2 = new Date().getFullYear();
   const yearLeaves = leaves.filter((l: any) => 
     l.status === "approved" && new Date(l.startDate).getFullYear() === currentYear
   );
@@ -329,13 +330,22 @@ function LeaveTab({ data }: { data: any }) {
     return yearLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
-  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 52;
+  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 12;
+
+  // New: carry-over "Available Leave" pool = Annual + Casual accrued since hire date, minus all-time usage
+  const hireDate = data.hireDate ? new Date(data.hireDate) : new Date();
+  const yearsOfService = Math.max(0, (new Date().getTime() - hireDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+  const annualCasualPerYear = (data.leaveAnnual ?? 21) + casualEntitlement;
+  const availableLeaveEntitled = Math.round(annualCasualPerYear * yearsOfService);
+  const availableLeaveUsed = leaves
+    .filter((l: any) => l.status === "approved" && (l.type === "annual" || l.type === "casual"))
+    .reduce((s: number, l: any) => s + (l.days || 0), 0);
 
   const balances = [
     { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
     { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
     { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
-    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/week)`, entitled: casualEntitlement, color: "#0ea5e9" },
+    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, entitled: casualEntitlement, color: "#0ea5e9" },
   ];
 
   return (
@@ -364,6 +374,22 @@ function LeaveTab({ data }: { data: any }) {
               </div>
             );
           })}
+
+          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="font-medium text-foreground">Available Leave</span>
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{Math.max(0, availableLeaveEntitled - availableLeaveUsed)}</span> / {availableLeaveEntitled} days remaining
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${availableLeaveEntitled > 0 ? Math.min(100, (availableLeaveUsed / availableLeaveEntitled) * 100) : 0}%`, background: "#8b5cf6" }}
+              />
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">{availableLeaveUsed} days used since hire date</p>
+          </div>
         </div>
       </Section>
 
