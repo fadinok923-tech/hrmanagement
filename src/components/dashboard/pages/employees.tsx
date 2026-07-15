@@ -323,11 +323,17 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
   const [extractingIqama, setExtractingIqama] = useState(false);
   const [extractingPassport, setExtractingPassport] = useState(false);
   const initialized = useRef(false);
+  const editingKey = editing?.id ?? "new";
 
   useEffect(() => {
-    if (!open) { initialized.current = false; return; }
-    if (initialized.current) return; // Only init once when modal opens
+    if (!open) {
+      initialized.current = false;
+      return;
+    }
+
+    if (initialized.current && editingKey === "new") return;
     initialized.current = true;
+
     if (editing) setForm({ ...editing });
     else setForm({
       empNo: `TAJ-${String(Math.floor(Math.random() * 9000) + 1000)}`,
@@ -338,10 +344,10 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
       visaType: "Saudi National", status: "active", notes: "",
-      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveCasualPerWeek: 1,
+      leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveMaternity: 70, leaveCasualPerMonth: 4,
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
-  }, [open, editing]);
+  }, [open, editingKey]);
 
   function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
 
@@ -533,8 +539,8 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
             <Field label="Emergency Leave (days)">
               <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
             </Field>
-            <Field label="Casual Leave (days/week)">
-              <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
+            <Field label="Casual Leave (days/month)">
+              <input type="number" min={0} max={31} className={inputCls} value={form.leaveCasualPerMonth ?? 4} onChange={(e) => set("leaveCasualPerMonth", Number(e.target.value))} />
             </Field>
           </div>
         </section>
@@ -820,7 +826,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         leaveAnnual: row.leaveAnnual != null ? Number(row.leaveAnnual) : null,
         leaveSick: row.leaveSick != null ? Number(row.leaveSick) : null,
         leaveEmergency: row.leaveEmergency != null ? Number(row.leaveEmergency) : null,
-        leaveCasualPerWeek: row.leaveCasualPerWeek != null ? Number(row.leaveCasualPerWeek) : null,
+        leaveCasualPerMonth: row.leaveCasualPerMonth != null ? Number(row.leaveCasualPerMonth) : null,
       };
       for (const [k, v] of Object.entries(opt)) { if (v !== null) body[k] = v; }
 
