@@ -375,9 +375,23 @@ function LeaveTab({ data }: { data: any }) {
             );
           })}
           {(() => {
-            const annualBalance = Math.max(0, (data.leaveAnnual ?? 21) - usedDays("annual"));
-            const casualBalance = Math.max(0, casualEntitlement - usedDays("casual"));
+            const hireDate = data.hireDate ? new Date(data.hireDate) : new Date();
+            const now = new Date();
+            const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
+
+            const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
+            const casualPerMonth = data.leaveCasualPerWeek ?? 1;
+
+            const annualEarned = annualPerMonth * monthsWorked;
+            const casualEarned = casualPerMonth * monthsWorked;
+
+            const annualUsedAllTime = leaves.filter((l: any) => l.status === "approved" && l.type === "annual").reduce((s: number, l: any) => s + (l.days || 0), 0);
+            const casualUsedAllTime = leaves.filter((l: any) => l.status === "approved" && l.type === "casual").reduce((s: number, l: any) => s + (l.days || 0), 0);
+
+            const annualBalance = Math.max(0, Math.round(annualEarned - annualUsedAllTime));
+            const casualBalance = Math.max(0, Math.round(casualEarned - casualUsedAllTime));
             const availableTotal = annualBalance + casualBalance;
+
             return (
               <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
                 <div className="mb-1 flex items-center justify-between text-xs">
@@ -388,7 +402,7 @@ function LeaveTab({ data }: { data: any }) {
                   <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
                 </div>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {annualBalance} annual + {casualBalance} casual remaining
+                  {annualBalance} annual + {casualBalance} casual · {monthsWorked} months worked
                 </p>
               </div>
             );
