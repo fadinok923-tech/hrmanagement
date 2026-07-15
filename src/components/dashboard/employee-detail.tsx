@@ -318,8 +318,6 @@ function LeaveTab({ data }: { data: any }) {
   const { t } = useLanguage();
   const leaves = data.leaves || [];
 
-  if (leaves.length === 0) return <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />;
-
   const approvedLeaves = leaves.filter((l: any) => l.status === "approved");
 
   const hireDate = data.activeDate ? new Date(data.activeDate) : (data.hireDate ? new Date(data.hireDate) : new Date());
@@ -393,6 +391,9 @@ function LeaveTab({ data }: { data: any }) {
       </Section>
 
       <Section title="Leave History">
+        {leaves.length === 0 ? (
+          <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />
+        ) : (
         <div className="space-y-2">
           {leaves.map((l: any) => (
             <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
@@ -407,6 +408,7 @@ function LeaveTab({ data }: { data: any }) {
             </div>
           ))}
         </div>
+        )}
       </Section>
     </div>
   );
