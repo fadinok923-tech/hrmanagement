@@ -325,17 +325,18 @@ function LeaveTab({ data }: { data: any }) {
     l.status === "approved" && new Date(l.startDate).getFullYear() === currentYear
   );
 
-  function usedDays(type: string) {
-    return yearLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
+  function usedDays(type: string | string[]) {
+    const types = Array.isArray(type) ? type : [type];
+    return yearLeaves.filter((l: any) => types.includes(l.type)).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
   const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 12;
+  const combinedAnnualEntitlement = (data.leaveAnnual ?? 21) + casualEntitlement;
 
   const balances = [
-    { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
+    { type: ["annual", "casual"], label: "Annual Leave (incl. Casual)", entitled: combinedAnnualEntitlement, color: "#3b82f6" },
     { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
     { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
-    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, entitled: casualEntitlement, color: "#0ea5e9" },
   ];
 
   return (
