@@ -329,13 +329,13 @@ function LeaveTab({ data }: { data: any }) {
     return yearLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
-  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 52;
+  const casualEntitlement = (data.leaveCasualPerWeek ?? 1) * 12;
 
   const balances = [
     { type: "annual", label: "Annual Leave", entitled: data.leaveAnnual ?? 21, color: "#3b82f6" },
     { type: "sick", label: "Sick Leave", entitled: data.leaveSick ?? 30, color: "#10b981" },
     { type: "emergency", label: "Emergency Leave", entitled: data.leaveEmergency ?? 3, color: "#f59e0b" },
-    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/week)`, entitled: casualEntitlement, color: "#0ea5e9" },
+    { type: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, entitled: casualEntitlement, color: "#0ea5e9" },
   ];
 
   return (
@@ -364,6 +364,25 @@ function LeaveTab({ data }: { data: any }) {
               </div>
             );
           })}
+          {(() => {
+            const annualBalance = Math.max(0, (data.leaveAnnual ?? 21) - usedDays("annual"));
+            const casualBalance = Math.max(0, casualEntitlement - usedDays("casual"));
+            const availableTotal = annualBalance + casualBalance;
+            return (
+              <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">Available Leave</span>
+                  <span className="font-semibold text-foreground">{availableTotal} days</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {annualBalance} annual + {casualBalance} casual remaining
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </Section>
 

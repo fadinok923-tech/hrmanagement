@@ -35,6 +35,10 @@ export interface NormalEmployee {
   passportPhoto: string | null;
   avatarColor: string;
   notes: string | null;
+  leaveAnnual: number;
+  leaveSick: number;
+  leaveEmergency: number;
+  leaveCasualPerWeek: number;
 }
 
 export interface NormalAttendance {
@@ -205,6 +209,10 @@ export function normalizeEmployee(e: any): NormalEmployee {
     passportPhoto: e.passportPhoto ?? null,
     avatarColor: e.avatarColor || "#1e3a8a",
     notes: e.notes ?? null,
+    leaveAnnual: Number(e.leaveAnnual) ?? 21,
+    leaveSick: Number(e.leaveSick) ?? 30,
+    leaveEmergency: Number(e.leaveEmergency) ?? 3,
+    leaveCasualPerWeek: Number(e.leaveCasualPerWeek) ?? 1,
   };
 }
 
