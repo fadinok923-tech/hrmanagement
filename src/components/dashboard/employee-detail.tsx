@@ -352,40 +352,37 @@ function LeaveTab({ data }: { data: any }) {
 
   return (
     <div className="space-y-4">
-      <Section title="Leave Balance">
+      <Section title="Leave Entitlements">
         <div className="space-y-3">
-          {balances.map((b) => {
-            const remaining = Math.max(0, b.earned - b.used);
-            const pct = b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0;
-            return (
-              <div key={b.key}>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground">{b.label}</span>
-                  <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : b.color }}
-                  />
-                </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">{b.used} days used (all-time)</p>
-              </div>
-            );
-          })}
-          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+          <div>
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-medium text-foreground">Available Leave</span>
-              <span className="font-semibold text-foreground">{availableTotal} days</span>
+              <span className="font-medium text-foreground">Annual Leave</span>
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{annualRemaining}</span> / {annualEarned} days remaining
+              </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : "#3b82f6" }}
+              />
             </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {annualBalance} annual + {casualBalance} casual · {monthsWorked} months worked
-            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">{annualUsed} days used (all-time) · {monthsWorked} months worked</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-dashed border-slate-200">
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Sick Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveSick ?? 30} days</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Emergency Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveEmergency ?? 3} days</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Casual Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveCasualPerWeek ?? 1}x/month</p>
+            </div>
           </div>
         </div>
       </Section>
