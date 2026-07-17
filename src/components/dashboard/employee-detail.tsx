@@ -325,67 +325,49 @@ function LeaveTab({ data }: { data: any }) {
   const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
-  const casualPerMonth = data.leaveCasualPerWeek ?? 1;
-
   const annualEarned = Math.round(annualPerMonth * monthsWorked);
-  const casualEarned = Math.round(casualPerMonth * monthsWorked);
 
   function usedAllTime(type: string) {
     return approvedLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
   const annualUsed = usedAllTime("annual");
-  const casualUsed = usedAllTime("casual");
-  const sickUsed = usedAllTime("sick");
-  const emergencyUsed = usedAllTime("emergency");
-
-  const annualBalance = Math.max(0, annualEarned - annualUsed);
-  const casualBalance = Math.max(0, casualEarned - casualUsed);
-  const availableTotal = annualBalance + casualBalance;
-
-  const balances = [
-    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6" },
-    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981" },
-    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b" },
-    { key: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, earned: casualEarned, used: casualUsed, color: "#0ea5e9" },
-  ];
+  const annualRemaining = Math.max(0, annualEarned - annualUsed);
+  const pct = annualEarned > 0 ? Math.min(100, (annualUsed / annualEarned) * 100) : 0;
 
   return (
     <div className="space-y-4">
-      <Section title="Leave Balance">
+      <Section title="Leave Entitlements">
         <div className="space-y-3">
-          {balances.map((b) => {
-            const remaining = Math.max(0, b.earned - b.used);
-            const pct = b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0;
-            return (
-              <div key={b.key}>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="font-medium text-foreground">{b.label}</span>
-                  <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : b.color }}
-                  />
-                </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">{b.used} days used (all-time)</p>
-              </div>
-            );
-          })}
-          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+          <div>
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-medium text-foreground">Available Leave</span>
-              <span className="font-semibold text-foreground">{availableTotal} days</span>
+              <span className="font-medium text-foreground">Annual Leave</span>
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{annualRemaining}</span> / {annualEarned} days remaining
+              </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : "#3b82f6" }}
+              />
             </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {annualBalance} annual + {casualBalance} casual · {monthsWorked} months worked
-            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">{annualUsed} days used (all-time) · {monthsWorked} months worked</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-dashed border-slate-200">
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Sick Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveSick ?? 30} days</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Emergency Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveEmergency ?? 3} days</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">Casual Leave</p>
+              <p className="text-sm font-semibold text-foreground">{data.leaveCasualPerWeek ?? 1}x/month</p>
+            </div>
           </div>
         </div>
       </Section>
