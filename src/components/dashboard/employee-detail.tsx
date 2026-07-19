@@ -373,6 +373,11 @@ function LeaveTab({ data }: { data: any }) {
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-2 rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: !noLimit &&
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full transition-all"
                     style={{ width: `${pct}%`, background: !noLimit && pct >= 100 ? "#ef4444" : b.color }}
                   />
                 </div>
