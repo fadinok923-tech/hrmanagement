@@ -364,7 +364,7 @@ function LeaveTab({ data }: { data: any }) {
                   <span className="font-medium text-foreground">{b.label}</span>
                   <span className="text-muted-foreground">
                     {noLimit ? (
-                      <span className="font-semibold text-foreground">{b.used} days taken (no limit)</span>
+                      <span className="font-semibold text-foreground">{b.used} days taken</span>
                     ) : (
                       <><span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining</>
                     )}
