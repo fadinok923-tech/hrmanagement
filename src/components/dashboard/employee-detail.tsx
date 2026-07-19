@@ -335,9 +335,13 @@ function LeaveTab({ data }: { data: any }) {
   const annualRemaining = Math.max(0, annualEarned - annualUsed);
   const pct = annualEarned > 0 ? Math.min(100, (annualUsed / annualEarned) * 100) : 0;
 
+  const sickUsed = usedAllTime("sick");
+  const emergencyUsed = usedAllTime("emergency");
+  const casualUsed = usedAllTime("casual");
+
   return (
     <div className="space-y-4">
-      <Section title="Leave Entitlements">
+      <Section title="Leave Summary">
         <div className="space-y-3">
           <div>
             <div className="mb-1 flex items-center justify-between text-xs">
@@ -357,16 +361,16 @@ function LeaveTab({ data }: { data: any }) {
 
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-dashed border-slate-200">
             <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Sick Leave</p>
-              <p className="text-sm font-semibold text-foreground">{data.leaveSick ?? 30} days</p>
+              <p className="text-[10px] text-muted-foreground">Sick Leave Taken</p>
+              <p className="text-sm font-semibold text-foreground">{sickUsed} days</p>
             </div>
             <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Emergency Leave</p>
-              <p className="text-sm font-semibold text-foreground">{data.leaveEmergency ?? 3} days</p>
+              <p className="text-[10px] text-muted-foreground">Emergency Leave Taken</p>
+              <p className="text-sm font-semibold text-foreground">{emergencyUsed} days</p>
             </div>
             <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Casual Leave</p>
-              <p className="text-sm font-semibold text-foreground">{data.leaveCasualPerWeek ?? 1}x/month</p>
+              <p className="text-[10px] text-muted-foreground">Casual Leave Taken</p>
+              <p className="text-sm font-semibold text-foreground">{casualUsed} days</p>
             </div>
           </div>
         </div>
