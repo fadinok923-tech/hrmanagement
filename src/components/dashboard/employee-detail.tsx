@@ -355,20 +355,25 @@ function LeaveTab({ data }: { data: any }) {
       <Section title="Leave Balance">
         <div className="space-y-3">
           {balances.map((b) => {
+            const noLimit = b.earned === 0;
             const remaining = Math.max(0, b.earned - b.used);
-            const pct = b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0;
+            const pct = noLimit ? Math.min(100, b.used * 10) : (b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0);
             return (
               <div key={b.key}>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="font-medium text-foreground">{b.label}</span>
                   <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining
+                    {noLimit ? (
+                      <span className="font-semibold text-foreground">{b.used} days taken (no limit)</span>
+                    ) : (
+                      <><span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining</>
+                    )}
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : b.color }}
+                    style={{ width: `${pct}%`, background: !noLimit && pct >= 100 ? "#ef4444" : b.color }}
                   />
                 </div>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">{b.used} days used (all-time)</p>
