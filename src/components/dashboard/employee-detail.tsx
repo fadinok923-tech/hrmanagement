@@ -325,53 +325,67 @@ function LeaveTab({ data }: { data: any }) {
   const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
+  const casualPerMonth = data.leaveCasualPerWeek ?? 1;
+
   const annualEarned = Math.round(annualPerMonth * monthsWorked);
+  const casualEarned = Math.round(casualPerMonth * monthsWorked);
 
   function usedAllTime(type: string) {
     return approvedLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
   const annualUsed = usedAllTime("annual");
+  const casualUsed = usedAllTime("casual");
   const sickUsed = usedAllTime("sick");
   const emergencyUsed = usedAllTime("emergency");
-  const casualUsed = usedAllTime("casual");
 
-  const annualRemaining = Math.max(0, annualEarned - annualUsed);
-  const pct = annualEarned > 0 ? Math.min(100, (annualUsed / annualEarned) * 100) : 0;
+  const annualBalance = Math.max(0, annualEarned - annualUsed);
+  const casualBalance = Math.max(0, casualEarned - casualUsed);
+  const availableTotal = annualBalance + casualBalance;
+
+  const balances = [
+    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6" },
+    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981" },
+    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b" },
+    { key: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, earned: casualEarned, used: casualUsed, color: "#0ea5e9" },
+  ];
 
   return (
     <div className="space-y-4">
-      <Section title="Leave Summary">
+      <Section title="Leave Balance">
         <div className="space-y-3">
-          <div>
+          {balances.map((b) => {
+            const remaining = Math.max(0, b.earned - b.used);
+            const pct = b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0;
+            return (
+              <div key={b.key}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{b.label}</span>
+                  <span className="text-muted-foreground">
+                    <span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : b.color }}
+                  />
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">{b.used} days used (all-time)</p>
+              </div>
+            );
+          })}
+          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-medium text-foreground">Annual Leave</span>
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{annualRemaining}</span> / {annualEarned} days remaining
-              </span>
+              <span className="font-medium text-foreground">Available Leave</span>
+              <span className="font-semibold text-foreground">{availableTotal} days</span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-2 rounded-full transition-all"
-                style={{ width: `${pct}%`, background: pct >= 100 ? "#ef4444" : "#3b82f6" }}
-              />
+              <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
             </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">{annualUsed} days used (all-time) · {monthsWorked} months worked</p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 border-t border-dashed border-slate-200 pt-2">
-            <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Sick Leave Taken</p>
-              <p className="text-sm font-semibold text-foreground">{sickUsed} days</p>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Emergency Leave Taken</p>
-              <p className="text-sm font-semibold text-foreground">{emergencyUsed} days</p>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-2 text-center">
-              <p className="text-[10px] text-muted-foreground">Casual Leave Taken</p>
-              <p className="text-sm font-semibold text-foreground">{casualUsed} days</p>
-            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {annualBalance} annual + {casualBalance} casual · {monthsWorked} months worked
+            </p>
           </div>
         </div>
       </Section>
@@ -380,20 +394,20 @@ function LeaveTab({ data }: { data: any }) {
         {leaves.length === 0 ? (
           <EmptyState icon={<CalendarDays className="h-6 w-6" />} title={t("det.noRecords")} />
         ) : (
-          <div className="space-y-2">
-            {leaves.map((l: any) => (
-              <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium capitalize">{l.type} Leave · {l.days} days</p>
-                  <StatusBadge status={l.status} />
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(l.startDate).toLocaleDateString()} → {new Date(l.endDate).toLocaleDateString()}
-                </p>
-                {l.reason && <p className="mt-1 text-xs text-muted-foreground">{l.reason}</p>}
+        <div className="space-y-2">
+          {leaves.map((l: any) => (
+            <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium capitalize">{l.type} Leave · {l.days} days</p>
+                <StatusBadge status={l.status} />
               </div>
-            ))}
-          </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {new Date(l.startDate).toLocaleDateString()} → {new Date(l.endDate).toLocaleDateString()}
+              </p>
+              {l.reason && <p className="mt-1 text-xs text-muted-foreground">{l.reason}</p>}
+            </div>
+          ))}
+        </div>
         )}
       </Section>
     </div>

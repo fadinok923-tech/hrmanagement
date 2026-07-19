@@ -515,10 +515,19 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Leave Entitlements */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlement</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlements (Days/Year)</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Annual Leave (days)">
               <input type="number" className={inputCls} value={form.leaveAnnual ?? 21} onChange={(e) => set("leaveAnnual", Number(e.target.value))} />
+            </Field>
+            <Field label="Sick Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveSick ?? 30} onChange={(e) => set("leaveSick", Number(e.target.value))} />
+            </Field>
+            <Field label="Emergency Leave (days)">
+              <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
+            </Field>
+            <Field label="Casual Leave (days/month)">
+              <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
             </Field>
           </div>
         </section>
