@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     const department = searchParams.get("department") || "";
     const status = searchParams.get("status") || "";
     const nationality = searchParams.get("nationality") || "";
+    const visaType = searchParams.get("visaType") || "";
 
     const where: any = {};
     if (search) {
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
     if (department && department !== "all") where.department = department;
     if (status && status !== "all") where.status = status;
     if (nationality && nationality !== "all") where.nationality = nationality;
+    if (visaType && visaType !== "all") where.visaType = visaType;
 
     const employees = await db.employee.findMany({
       where,

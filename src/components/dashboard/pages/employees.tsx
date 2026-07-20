@@ -45,6 +45,7 @@ export function EmployeesPage() {
   const [dept, setDept] = useState("all");
   const [status, setStatus] = useState("all");
   const [nat, setNat] = useState("all");
+  const [visa, setVisa] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<NormalEmployee | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -59,6 +60,7 @@ export function EmployeesPage() {
       if (dept !== "all") params.set("department", dept);
       if (status !== "all") params.set("status", status);
       if (nat !== "all") params.set("nationality", nat);
+      if (visa !== "all") params.set("visaType", visa);
       const res = await fetch(`/api/employees?${params}`);
       const d = await res.json();
       if (d.ok) setList(normalizeEmployeeList(d.data));
@@ -71,7 +73,7 @@ export function EmployeesPage() {
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
      
-  }, [search, dept, status, nat]);
+  }, [search, dept, status, nat, visa]);
 
   const stats = useMemo(() => {
     const total = list.length;
@@ -196,6 +198,13 @@ export function EmployeesPage() {
           options={[{ value: "all", label: t("dash.all") }, ...DEPARTMENTS.map((d) => ({ value: d, label: d }))]} />
         <FilterSelect value={nat} onChange={setNat} className="w-32"
           options={[{ value: "all", label: t("dash.all") }, ...NATIONALITIES.map((n) => ({ value: n, label: n }))]} />
+        <FilterSelect value={visa} onChange={setVisa} className="w-36"
+          options={[
+            { value: "all", label: t("dash.all") },
+            { value: "Saudi National", label: "Saudi National" },
+            { value: "COMPANY VISA", label: "Company Visa" },
+            { value: "EXTERNAL VISA", label: "External Visa" },
+          ]} />
         <FilterSelect value={status} onChange={setStatus} className="w-32"
           options={[
             { value: "all", label: t("dash.all") },
