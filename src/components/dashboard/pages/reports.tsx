@@ -53,30 +53,51 @@ export function ReportsPage() {
   }
 
   async function exportFullReport() {
-    const [empRes, payRes, attRes, kpiRes] = await Promise.all([
+    const [empRes, payRes, attRes, kpiRes, leaveRes, docRes, candRes] = await Promise.all([
       fetch("/api/employees"), fetch("/api/payroll"), fetch("/api/attendance"), fetch("/api/kpis"),
+      fetch("/api/leave"), fetch("/api/documents"), fetch("/api/candidates"),
     ]);
-    const [empD, payD, attD, kpiD] = await Promise.all([empRes.json(), payRes.json(), attRes.json(), kpiRes.json()]);
+    const [empD, payD, attD, kpiD, leaveD, docD, candD] = await Promise.all([
+      empRes.json(), payRes.json(), attRes.json(), kpiRes.json(), leaveRes.json(), docRes.json(), candRes.json(),
+    ]);
     const sheets = [
       {
         name: "Employees",
         rows: normalizeEmployeeList(empD.data).map((e) => ({
-          "Emp No": e.empNo, Name: e.fullName, Nationality: e.nationality, Department: e.department,
-          "Job Title": e.jobTitle, Salary: e.basicSalary + e.allowances, Status: e.status,
+          "Emp No": e.empNo, "Full Name": e.fullName, "Arabic Name": e.fullNameAr || "",
+          Nationality: e.nationality, Gender: e.gender, "Date of Birth": e.dateOfBirth,
+          "Marital Status": e.maritalStatus, Phone: e.phone, Email: e.email, Address: e.address,
+          "Emergency Contact": e.emergencyContact, "Job Title": e.jobTitle, Department: e.department,
+          "Employment Type": e.employmentType, "Hire Date": e.hireDate, "Contract End": e.contractEnd,
+          "Basic Salary": e.basicSalary, Allowances: e.allowances, "Total Salary": e.basicSalary + e.allowances,
+          "Bank Account": e.bankAccount, IBAN: e.iban, "Passport No": e.passportNo, "Passport Expiry": e.passportExpiry,
+          "Iqama No": e.iqamaNo, "Iqama Expiry": e.iqamaExpiry, "Visa Type": e.visaType, Status: e.status,
+          "Annual Leave (days)": e.leaveAnnual, "Sick Leave (days)": e.leaveSick,
+          "Emergency Leave (days)": e.leaveEmergency, "Casual Leave (per month)": e.leaveCasualPerWeek,
+          Notes: e.notes,
+        })),
+      },
+      {
+        name: "Leaves",
+        rows: (leaveD.data || []).map((l: any) => ({
+          Employee: l.employee?.fullName || "", "Emp No": l.employee?.empNo || "", Department: l.employee?.department || "",
+          Type: l.type, "Start Date": l.startDate, "End Date": l.endDate, Days: l.days,
+          Reason: l.reason || "", Status: l.status, Approver: l.approver || "",
         })),
       },
       {
         name: "Payroll",
         rows: normalizePayrollList(payD.data).map((p) => ({
           Month: p.month, Employee: p.employeeName, "Emp No": p.empNo,
-          Basic: p.basicSalary, Allowances: p.allowances, GOSI: p.gosi, Net: p.netSalary, Status: p.status,
+          Basic: p.basicSalary, Allowances: p.allowances, Overtime: p.overtime, Deductions: p.deductions,
+          GOSI: p.gosi, Net: p.netSalary, Status: p.status, "Pay Date": p.payDate,
         })),
       },
       {
         name: "Attendance",
         rows: normalizeAttendanceList(attD.data).map((a) => ({
           Date: a.date, Employee: a.employeeName, "Emp No": a.empNo,
-          "Check In": a.checkIn, "Check Out": a.checkOut, "Work Hrs": a.workHours, Status: a.status,
+          "Check In": a.checkIn, "Check Out": a.checkOut, "Work Hrs": a.workHours, Overtime: a.overtime, Status: a.status,
         })),
       },
       {
@@ -84,19 +105,42 @@ export function ReportsPage() {
         rows: normalizeKpiList(kpiD.data).map((k) => ({
           Period: k.period, Employee: k.employeeName, "Emp No": k.empNo,
           Productivity: k.productivity, Quality: k.quality, Teamwork: k.teamwork,
-          Punctuality: k.punctuality, Initiative: k.initiative, Final: k.finalScore,
+          Punctuality: k.punctuality, Initiative: k.initiative, Final: k.finalScore, Comments: k.comments || "",
+        })),
+      },
+      {
+        name: "Documents",
+        rows: (docD.data || []).map((d: any) => ({
+          Employee: d.employee?.fullName || "", "Emp No": d.employee?.empNo || "",
+          Title: d.title, Type: d.type, "Issue Date": d.issueDate || "", "Expiry Date": d.expiryDate || "",
+          Status: d.status, Notes: d.notes || "",
+        })),
+      },
+      {
+        name: "Candidates",
+        rows: (candD.data || []).map((c: any) => ({
+          Name: c.fullName, Email: c.email || "", Phone: c.phone || "", Position: c.position,
+          Department: c.department || "", Source: c.source || "", "Experience (yrs)": c.experience ?? "",
+          Status: c.status, Rating: c.rating, "Expected Salary": c.expectedSalary ?? "",
+          "Applied At": c.appliedAt, Notes: c.notes || "",
         })),
       },
       {
         name: "Summary",
         rows: data ? [
           { Metric: "Total Employees", Value: data.overview.totalEmployees },
+          { Metric: "Active", Value: data.overview.activeCount },
+          { Metric: "On Leave", Value: data.overview.onLeaveCount },
           { Metric: "Saudi", Value: data.overview.saudiCount },
           { Metric: "Expat", Value: data.overview.expatCount },
           { Metric: "Saudization %", Value: data.overview.saudizationRate },
           { Metric: "Monthly Payroll", Value: data.overview.totalMonthlySalary },
           { Metric: "Pending Leaves", Value: data.overview.pendingLeaves },
+          { Metric: "Approved Leaves", Value: data.overview.approvedLeaves },
+          { Metric: "Rejected Leaves", Value: data.overview.rejectedLeaves },
+          { Metric: "Total Leaves", Value: data.overview.totalLeaves },
           { Metric: "Avg KPI", Value: data.overview.avgKpi },
+          { Metric: "Total Candidates", Value: data.overview.totalCandidates },
           { Metric: "Total Documents", Value: data.overview.totalDocuments },
           { Metric: "Expired Docs", Value: data.documents.expired },
           { Metric: "Expiring Docs", Value: data.documents.expiring },
