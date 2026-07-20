@@ -55,7 +55,7 @@ export function ReportsPage() {
   async function exportFullReport() {
     const [empRes, payRes, attRes, kpiRes, leaveRes, docRes, candRes] = await Promise.all([
       fetch("/api/employees"), fetch("/api/payroll"), fetch("/api/attendance"), fetch("/api/kpis"),
-      fetch("/api/leave"), fetch("/api/documents"), fetch("/api/candidates"),
+      fetch("/api/leave"), fetch("/api/documents"), fetch("/api/recruitment"),
     ]);
     const [empD, payD, attD, kpiD, leaveD, docD, candD] = await Promise.all([
       empRes.json(), payRes.json(), attRes.json(), kpiRes.json(), leaveRes.json(), docRes.json(), candRes.json(),
