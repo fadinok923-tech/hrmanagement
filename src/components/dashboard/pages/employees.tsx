@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, useCallback, type FormEvent } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import {
@@ -51,6 +51,26 @@ export function EmployeesPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(ids: string[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
 
   async function load() {
     setLoading(true);
@@ -171,6 +191,11 @@ export function EmployeesPage() {
             <button onClick={openAdd} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-colors hover:bg-foreground/90">
               <Plus className="h-3.5 w-3.5" /> {t("dash.add")}
             </button>
+            {selectedIds.size > 0 && (
+              <button onClick={() => setBulkEditOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
+                Bulk Edit ({selectedIds.size})
+              </button>
+            )}
           </>
         }
       />
@@ -274,6 +299,10 @@ export function EmployeesPage() {
           columns={columns}
           rows={list}
           onRowClick={(e) => setEmployeeDetailId(e.id)}
+          selectable
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
           rowActions={(e) => (
             <>
               <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900">
@@ -297,6 +326,14 @@ export function EmployeesPage() {
       )}
 
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); load(); }} />
+
+      <BulkEditModal
+        open={bulkEditOpen}
+        count={selectedIds.size}
+        onClose={() => setBulkEditOpen(false)}
+        onSaved={() => { setBulkEditOpen(false); setSelectedIds(new Set()); load(); }}
+        ids={Array.from(selectedIds)}
+      />
 
       <ConfirmDialog
         open={!!deleteId}
@@ -647,6 +684,113 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
           </button>
         </div>
       </form>
+    </ModalShell>
+  );
+}
+
+function BulkEditModal({ open, onClose, onSaved, ids, count }: {
+  open: boolean; onClose: () => void; onSaved: () => void; ids: string[]; count: number;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [fields, setFields] = useState<Record<string, any>>({});
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+
+  function toggle(key: string) {
+    setEnabled((e) => ({ ...e, [key]: !e[key] }));
+  }
+
+  function set(key: string, v: any) {
+    setFields((f) => ({ ...f, [key]: v }));
+  }
+
+  async function handleSave() {
+    const updates: Record<string, any> = {};
+    Object.keys(enabled).forEach((k) => {
+      if (enabled[k]) updates[k] = fields[k];
+    });
+    if (Object.keys(updates).length === 0) {
+      toast.error("Enable at least one field to update");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/employees/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, updates }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        toast.success(`${count} employees updated`);
+        onSaved();
+      } else {
+        toast.error(d.error || "Failed");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none";
+
+  const Row = ({ k, label, children }: { k: string; label: string; children: ReactNode }) => (
+    <div className="flex items-center gap-3">
+      <input type="checkbox" checked={!!enabled[k]} onChange={() => toggle(k)} />
+      <div className="flex-1">
+        <label className="mb-1 block text-xs font-medium text-slate-400">{label}</label>
+        {children}
+      </div>
+    </div>
+  );
+
+  return (
+    <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${count} employees)`} size="md">
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">Check a field to apply it to all selected employees. Unchecked fields stay unchanged.</p>
+
+        <Row k="department" label="Department">
+          <select className={inputCls} value={fields.department || "Production"} onChange={(e) => set("department", e.target.value)}>
+            {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </Row>
+        <Row k="status" label="Status">
+          <select className={inputCls} value={fields.status || "active"} onChange={(e) => set("status", e.target.value)}>
+            <option value="active">Active</option>
+            <option value="on_leave">On Leave</option>
+            <option value="terminated">Terminated</option>
+          </select>
+        </Row>
+        <Row k="nationality" label="Nationality">
+          <select className={inputCls} value={fields.nationality || "Saudi"} onChange={(e) => set("nationality", e.target.value)}>
+            {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </Row>
+        <Row k="basicSalary" label="Basic Salary">
+          <input type="number" className={inputCls} value={fields.basicSalary ?? 0} onChange={(e) => set("basicSalary", Number(e.target.value))} />
+        </Row>
+        <Row k="allowances" label="Allowances">
+          <input type="number" className={inputCls} value={fields.allowances ?? 0} onChange={(e) => set("allowances", Number(e.target.value))} />
+        </Row>
+        <Row k="leaveAnnual" label="Annual Leave (days)">
+          <input type="number" className={inputCls} value={fields.leaveAnnual ?? 21} onChange={(e) => set("leaveAnnual", Number(e.target.value))} />
+        </Row>
+        <Row k="leaveSick" label="Sick Leave (days)">
+          <input type="number" className={inputCls} value={fields.leaveSick ?? 30} onChange={(e) => set("leaveSick", Number(e.target.value))} />
+        </Row>
+        <Row k="leaveEmergency" label="Emergency Leave (days)">
+          <input type="number" className={inputCls} value={fields.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
+        </Row>
+        <Row k="leaveCasualPerWeek" label="Casual Leave (per month)">
+          <input type="number" className={inputCls} value={fields.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
+        </Row>
+
+        <div className="flex justify-end gap-2 border-t border-slate-200 pt-2">
+          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-background px-4 text-sm font-medium hover:bg-slate-100">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="h-10 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
+            {saving ? "Saving..." : `Apply to ${count} employees`}
+          </button>
+        </div>
+      </div>
     </ModalShell>
   );
 }

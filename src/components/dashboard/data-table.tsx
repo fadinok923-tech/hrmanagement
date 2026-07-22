@@ -23,6 +23,10 @@ export function DataTable<T extends { id: string }>({
   emptyDescription,
   onRowClick,
   rowActions,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -31,6 +35,10 @@ export function DataTable<T extends { id: string }>({
   emptyDescription?: string;
   onRowClick?: (row: T) => void;
   rowActions?: (row: T) => ReactNode;
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: (ids: string[]) => void;
 }) {
   const [page, setPage] = useState(0);
 
@@ -71,6 +79,15 @@ export function DataTable<T extends { id: string }>({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
+              {selectable && (
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={pageRows.length > 0 && pageRows.every((r) => selectedIds?.has(r.id))}
+                    onChange={() => onToggleSelectAll?.(pageRows.map((r) => r.id))}
+                  />
+                </th>
+              )}
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -92,6 +109,15 @@ export function DataTable<T extends { id: string }>({
                   onRowClick && "cursor-pointer hover:bg-muted/40",
                 )}
               >
+                {selectable && (
+                  <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds?.has(row.id) || false}
+                      onChange={() => onToggleSelect?.(row.id)}
+                    />
+                  </td>
+                )}
                 {columns.map((c) => (
                   <td key={c.key} className={cn("px-4 py-3 text-foreground align-middle", alignClass(c.align), c.className)}>
                     {c.render ? c.render(row) : (row as any)[c.key] ?? "—"}
