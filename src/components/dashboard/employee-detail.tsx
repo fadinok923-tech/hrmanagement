@@ -327,6 +327,7 @@ function LeaveTab({ data }: { data: any }) {
     monthsWorked -= 1;
   }
   monthsWorked = Math.max(0, monthsWorked);
+  const daysWorked = Math.max(0, now.getDate() - hireDate.getDate());
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
   const weekendPerMonth = data.leaveCasualPerMonth ?? data.leaveCasualPerWeek ?? 4;
@@ -396,7 +397,7 @@ function LeaveTab({ data }: { data: any }) {
               <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {annualBalance} annual + {weekendBalance} weekend · {monthsWorked} months worked
+              {monthsWorked} months, {daysWorked} days worked
             </p>
           </div>
         </div>
