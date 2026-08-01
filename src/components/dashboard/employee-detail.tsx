@@ -325,29 +325,31 @@ function LeaveTab({ data }: { data: any }) {
   const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
-  const casualPerMonth = data.leaveCasualPerWeek ?? 1;
+  const weekendPerMonth = data.leaveCasualPerMonth ?? data.leaveCasualPerWeek ?? 4;
 
   const annualEarned = Math.round(annualPerMonth * monthsWorked);
-  const casualEarned = Math.round(casualPerMonth * monthsWorked);
+  const weekendEarned = Math.round(weekendPerMonth * monthsWorked);
 
   function usedAllTime(type: string) {
     return approvedLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
   }
 
   const annualUsed = usedAllTime("annual");
-  const casualUsed = usedAllTime("casual");
+  const weekendUsed = usedAllTime("casual"); // stored as "casual" in DB, displayed as Weekend Leave
   const sickUsed = usedAllTime("sick");
   const emergencyUsed = usedAllTime("emergency");
+  const unpaidUsed = usedAllTime("unpaid");
 
   const annualBalance = Math.max(0, annualEarned - annualUsed);
-  const casualBalance = Math.max(0, casualEarned - casualUsed);
-  const availableTotal = annualBalance + casualBalance;
+  const weekendBalance = Math.max(0, weekendEarned - weekendUsed);
+  const availableTotal = annualBalance + weekendBalance;
 
   const balances = [
-    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6" },
-    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981" },
-    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b" },
-    { key: "casual", label: `Casual Leave (${data.leaveCasualPerWeek ?? 1}x/month)`, earned: casualEarned, used: casualUsed, color: "#0ea5e9" },
+    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6", noLimit: false },
+    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981", noLimit: false },
+    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b", noLimit: false },
+    { key: "casual", label: `Weekend Leave (${weekendPerMonth}/month)`, earned: weekendEarned, used: weekendUsed, color: "#0ea5e9", noLimit: false },
+    { key: "unpaid", label: "Unpaid Leave", earned: 0, used: unpaidUsed, color: "#94a3b8", noLimit: true },
   ];
 
   return (
@@ -355,15 +357,14 @@ function LeaveTab({ data }: { data: any }) {
       <Section title="Leave Balance">
         <div className="space-y-3">
           {balances.map((b) => {
-            const noLimit = b.earned === 0;
             const remaining = Math.max(0, b.earned - b.used);
-            const pct = noLimit ? Math.min(100, b.used * 10) : (b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0);
+            const pct = b.noLimit ? Math.min(100, b.used * 10) : (b.earned > 0 ? Math.min(100, (b.used / b.earned) * 100) : 0);
             return (
               <div key={b.key}>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="font-medium text-foreground">{b.label}</span>
                   <span className="text-muted-foreground">
-                    {noLimit ? (
+                    {b.noLimit ? (
                       <span className="font-semibold text-foreground">{b.used} days taken</span>
                     ) : (
                       <><span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining</>
@@ -373,10 +374,12 @@ function LeaveTab({ data }: { data: any }) {
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: !noLimit && pct >= 100 ? "#ef4444" : b.color }}
+                    style={{ width: `${pct}%`, background: !b.noLimit && pct >= 100 ? "#ef4444" : b.color }}
                   />
                 </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">{b.used} days used (all-time)</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {b.noLimit ? "No entitlement pool — unlimited unpaid days" : `${b.used} days used (all-time)`}
+                </p>
               </div>
             );
           })}
@@ -389,7 +392,7 @@ function LeaveTab({ data }: { data: any }) {
               <div className="h-2 rounded-full" style={{ width: "100%", background: "#8b5cf6" }} />
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {annualBalance} annual + {casualBalance} casual · {monthsWorked} months worked
+              {annualBalance} annual + {weekendBalance} weekend · {monthsWorked} months worked
             </p>
           </div>
         </div>
@@ -403,7 +406,9 @@ function LeaveTab({ data }: { data: any }) {
           {leaves.map((l: any) => (
             <div key={l.id} className="rounded-lg border border-border bg-muted/20 p-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium capitalize">{l.type} Leave · {l.days} days</p>
+                <p className="text-sm font-medium capitalize">
+                  {l.type === "casual" ? "Weekend" : l.type} Leave · {l.days} days
+                </p>
                 <StatusBadge status={l.status} />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
