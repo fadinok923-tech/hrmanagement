@@ -572,7 +572,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
             <Field label="Emergency Leave (days)">
               <input type="number" className={inputCls} value={form.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
             </Field>
-            <Field label="Casual Leave (days/month)">
+            <Field label="Weekend Leave (days/month)">
               <input type="number" className={inputCls} value={form.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
             </Field>
           </div>
@@ -780,8 +780,8 @@ function BulkEditModal({ open, onClose, onSaved, ids, count }: {
         <Row k="leaveEmergency" label="Emergency Leave (days)">
           <input type="number" className={inputCls} value={fields.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
         </Row>
-        <Row k="leaveCasualPerWeek" label="Casual Leave (per month)">
-          <input type="number" className={inputCls} value={fields.leaveCasualPerWeek ?? 1} onChange={(e) => set("leaveCasualPerWeek", Number(e.target.value))} />
+        <Row k="leaveCasualPerMonth" label="Weekend Leave (per month)">
+          <input type="number" className={inputCls} value={fields.leaveCasualPerMonth ?? 1} onChange={(e) => set("leaveCasualPerMonth", Number(e.target.value))} />
         </Row>
 
         <div className="flex justify-end gap-2 border-t border-slate-200 pt-2">
