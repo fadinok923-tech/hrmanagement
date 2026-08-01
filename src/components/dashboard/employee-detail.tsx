@@ -322,7 +322,11 @@ function LeaveTab({ data }: { data: any }) {
 
   const hireDate = data.activeDate ? new Date(data.activeDate) : (data.hireDate ? new Date(data.hireDate) : new Date());
   const now = new Date();
-  const monthsWorked = Math.max(0, (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth()));
+  let monthsWorked = (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth());
+  if (now.getDate() < hireDate.getDate()) {
+    monthsWorked -= 1;
+  }
+  monthsWorked = Math.max(0, monthsWorked);
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
   const weekendPerMonth = data.leaveCasualPerMonth ?? data.leaveCasualPerWeek ?? 4;
