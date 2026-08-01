@@ -375,7 +375,7 @@ function LeaveTab({ data }: { data: any }) {
                   <span className="font-medium text-foreground">{b.label}</span>
                   <span className="text-muted-foreground">
                     {b.noLimit ? (
-                      <span className="font-semibold text-foreground">{b.used} days taken</span>
+                      <span className="font-semibold text-foreground">{b.used} days used</span>
                     ) : (
                       <><span className="font-semibold text-foreground">{remaining}</span> / {b.earned} days remaining</>
                     )}
@@ -388,7 +388,7 @@ function LeaveTab({ data }: { data: any }) {
                   />
                 </div>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {b.noLimit ? "No entitlement pool — unlimited unpaid days" : `${b.used} days used (all-time)`}
+                  {b.used} days used (all-time)
                 </p>
               </div>
             );
