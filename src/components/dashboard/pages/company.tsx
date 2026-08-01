@@ -72,27 +72,6 @@ export function CompanyPage() {
         <StatCard title={t("company.pendingLeaves")} value={formatNumber(o.pendingLeaves)} icon={<CalendarClock className="h-4 w-4" />} accent="red" delta={`${o.totalLeaves} ${t("leave.title").toLowerCase()}`} />
       </div>
 
-      {/* Company profile */}
-      <Panel title={t("company.profile")}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: t("company.name"), value: t("company.name") },
-            { label: t("company.address"), value: t("company.address") },
-            { label: t("company.cr"), value: "CR-1010-345678-Dammam" },
-            { label: t("company.vat"), value: "300123456700003" },
-            { label: t("company.gosi"), value: "GOSI-4456789-1" },
-            { label: t("company.established"), value: "2008" },
-            { label: t("company.employees"), value: String(o.totalEmployees) },
-            { label: t("company.departments"), value: String(deptData.length) },
-          ].map((it, i) => (
-            <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{it.label}</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">{it.value}</p>
-            </div>
-          ))}
-        </div>
-      </Panel>
-
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title={t("company.byDept")}>
@@ -155,6 +134,27 @@ export function CompanyPage() {
           </div>
         </Panel>
       </div>
+
+      {/* Company profile */}
+      <Panel title={t("company.profile")}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: t("company.name"), value: t("company.name") },
+            { label: t("company.address"), value: t("company.address") },
+            { label: t("company.cr"), value: "CR-1010-345678-Dammam" },
+            { label: t("company.vat"), value: "300123456700003" },
+            { label: t("company.gosi"), value: "GOSI-4456789-1" },
+            { label: t("company.established"), value: "2008" },
+            { label: t("company.employees"), value: String(o.totalEmployees) },
+            { label: t("company.departments"), value: String(deptData.length) },
+          ].map((it, i) => (
+            <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{it.label}</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{it.value}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
     </div>
   );
 }
