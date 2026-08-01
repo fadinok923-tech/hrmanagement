@@ -334,8 +334,11 @@ function LeaveTab({ data }: { data: any }) {
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
   const weekendPerMonth = data.leaveCasualPerMonth ?? data.leaveCasualPerWeek ?? 4;
 
-  const annualEarned = Math.round(annualPerMonth * monthsWorked);
-  const weekendEarned = Math.round(weekendPerMonth * monthsWorked);
+  const annualPerDay = annualPerMonth / 30;
+  const weekendPerDay = weekendPerMonth / 30;
+
+  const annualEarned = Math.round((annualPerMonth * monthsWorked) + (annualPerDay * daysWorked));
+  const weekendEarned = Math.round((weekendPerMonth * monthsWorked) + (weekendPerDay * daysWorked));
 
   function usedAllTime(type: string) {
     return approvedLeaves.filter((l: any) => l.type === type).reduce((s: number, l: any) => s + (l.days || 0), 0);
