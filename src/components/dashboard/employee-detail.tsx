@@ -327,7 +327,9 @@ function LeaveTab({ data }: { data: any }) {
     monthsWorked -= 1;
   }
   monthsWorked = Math.max(0, monthsWorked);
-  const daysWorked = Math.max(0, now.getDate() - hireDate.getDate());
+  const anniversary = new Date(hireDate);
+  anniversary.setMonth(anniversary.getMonth() + monthsWorked);
+  const daysWorked = Math.max(0, Math.floor((now.getTime() - anniversary.getTime()) / (1000 * 60 * 60 * 24)));
 
   const annualPerMonth = (data.leaveAnnual ?? 21) / 12;
   const weekendPerMonth = data.leaveCasualPerMonth ?? data.leaveCasualPerWeek ?? 4;
