@@ -52,7 +52,7 @@ export function EmployeesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -192,7 +192,7 @@ export function EmployeesPage() {
               <Plus className="h-3.5 w-3.5" /> {t("dash.add")}
             </button>
             {selectedIds.size > 0 && (
-              <button onClick={() => setBulkEditOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
+              <button onClick={() => setBulkOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
                 Bulk Edit ({selectedIds.size})
               </button>
             )}
@@ -246,6 +246,20 @@ export function EmployeesPage() {
           </button>
         </div>
       </div>
+
+      {selectedIds.size > 0 && view === "table" && (
+        <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5">
+          <p className="text-sm font-medium text-blue-800">{selectedIds.size} employee{selectedIds.size > 1 ? "s" : ""} selected</p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setBulkOpen(true)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
+              Bulk Edit
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -327,13 +341,14 @@ export function EmployeesPage() {
 
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={() => { setImportOpen(false); load(); }} />
 
-      <BulkEditModal
-        open={bulkEditOpen}
-        count={selectedIds.size}
-        onClose={() => setBulkEditOpen(false)}
-        onSaved={() => { setBulkEditOpen(false); setSelectedIds(new Set()); load(); }}
-        ids={Array.from(selectedIds)}
-      />
+      {bulkOpen && (
+        <BulkEditModal
+          open={bulkOpen}
+          onClose={() => setBulkOpen(false)}
+          employeeIds={Array.from(selectedIds)}
+          onSaved={() => { setBulkOpen(false); setSelectedIds(new Set()); load(); }}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteId}
@@ -688,106 +703,77 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
   );
 }
 
-function BulkEditModal({ open, onClose, onSaved, ids, count }: {
-  open: boolean; onClose: () => void; onSaved: () => void; ids: string[]; count: number;
+function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
+  open: boolean; onClose: () => void; employeeIds: string[]; onSaved: () => void;
 }) {
+  const [department, setDepartment] = useState("");
+  const [status, setStatus] = useState("");
+  const [leaveAnnual, setLeaveAnnual] = useState("");
+  const [leaveSick, setLeaveSick] = useState("");
   const [saving, setSaving] = useState(false);
-  const [fields, setFields] = useState<Record<string, any>>({});
-  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
-
-  function toggle(key: string) {
-    setEnabled((e) => ({ ...e, [key]: !e[key] }));
-  }
-
-  function set(key: string, v: any) {
-    setFields((f) => ({ ...f, [key]: v }));
-  }
-
-  async function handleSave() {
-    const updates: Record<string, any> = {};
-    Object.keys(enabled).forEach((k) => {
-      if (enabled[k]) updates[k] = fields[k];
-    });
-    if (Object.keys(updates).length === 0) {
-      toast.error("Enable at least one field to update");
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await fetch("/api/employees/bulk", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, updates }),
-      });
-      const d = await res.json();
-      if (d.ok) {
-        toast.success(`${count} employees updated`);
-        onSaved();
-      } else {
-        toast.error(d.error || "Failed");
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
 
   const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none";
 
-  const Row = ({ k, label, children }: { k: string; label: string; children: ReactNode }) => (
-    <div className="flex items-center gap-3">
-      <input type="checkbox" checked={!!enabled[k]} onChange={() => toggle(k)} />
-      <div className="flex-1">
-        <label className="mb-1 block text-xs font-medium text-slate-400">{label}</label>
-        {children}
-      </div>
-    </div>
-  );
+  async function handleApply() {
+    const body: Record<string, any> = {};
+    if (department) body.department = department;
+    if (status) body.status = status;
+    if (leaveAnnual) body.leaveAnnual = Number(leaveAnnual);
+    if (leaveSick) body.leaveSick = Number(leaveSick);
+
+    if (Object.keys(body).length === 0) {
+      toast.error("Select at least one field to update");
+      return;
+    }
+
+    setSaving(true);
+    let count = 0;
+    for (const id of employeeIds) {
+      try {
+        const res = await fetch(`/api/employees/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) count++;
+      } catch {}
+    }
+    setSaving(false);
+    toast.success(`${count} employee${count > 1 ? "s" : ""} updated`);
+    onSaved();
+  }
 
   return (
-    <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${count} employees)`} size="md">
+    <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${employeeIds.length} employees)`} size="md">
       <div className="space-y-4">
-        <p className="text-xs text-muted-foreground">Check a field to apply it to all selected employees. Unchecked fields stay unchanged.</p>
-
-        <Row k="department" label="Department">
-          <select className={inputCls} value={fields.department || "Production"} onChange={(e) => set("department", e.target.value)}>
+        <p className="text-xs text-slate-500">Only fields you fill in below will be updated. Leave blank to keep unchanged.</p>
+        <Field label="Department">
+          <select className={inputCls} value={department} onChange={(e) => setDepartment(e.target.value)}>
+            <option value="">— No change —</option>
             {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-        </Row>
-        <Row k="status" label="Status">
-          <select className={inputCls} value={fields.status || "active"} onChange={(e) => set("status", e.target.value)}>
+        </Field>
+        <Field label="Status">
+          <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">— No change —</option>
             <option value="active">Active</option>
             <option value="on_leave">On Leave</option>
             <option value="terminated">Terminated</option>
           </select>
-        </Row>
-        <Row k="nationality" label="Nationality">
-          <select className={inputCls} value={fields.nationality || "Saudi"} onChange={(e) => set("nationality", e.target.value)}>
-            {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </Row>
-        <Row k="basicSalary" label="Basic Salary">
-          <input type="number" className={inputCls} value={fields.basicSalary ?? 0} onChange={(e) => set("basicSalary", Number(e.target.value))} />
-        </Row>
-        <Row k="allowances" label="Allowances">
-          <input type="number" className={inputCls} value={fields.allowances ?? 0} onChange={(e) => set("allowances", Number(e.target.value))} />
-        </Row>
-        <Row k="leaveAnnual" label="Annual Leave (days)">
-          <input type="number" className={inputCls} value={fields.leaveAnnual ?? 21} onChange={(e) => set("leaveAnnual", Number(e.target.value))} />
-        </Row>
-        <Row k="leaveSick" label="Sick Leave (days)">
-          <input type="number" className={inputCls} value={fields.leaveSick ?? 30} onChange={(e) => set("leaveSick", Number(e.target.value))} />
-        </Row>
-        <Row k="leaveEmergency" label="Emergency Leave (days)">
-          <input type="number" className={inputCls} value={fields.leaveEmergency ?? 3} onChange={(e) => set("leaveEmergency", Number(e.target.value))} />
-        </Row>
-        <Row k="leaveCasualPerMonth" label="Weekend Leave (per month)">
-          <input type="number" className={inputCls} value={fields.leaveCasualPerMonth ?? 1} onChange={(e) => set("leaveCasualPerMonth", Number(e.target.value))} />
-        </Row>
-
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-2">
-          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-background px-4 text-sm font-medium hover:bg-slate-100">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="h-10 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
-            {saving ? "Saving..." : `Apply to ${count} employees`}
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Annual Leave (days)">
+            <input type="number" className={inputCls} placeholder="No change" value={leaveAnnual} onChange={(e) => setLeaveAnnual(e.target.value)} />
+          </Field>
+          <Field label="Sick Leave (days)">
+            <input type="number" className={inputCls} placeholder="No change" value={leaveSick} onChange={(e) => setLeaveSick(e.target.value)} />
+          </Field>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button onClick={handleApply} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Apply to {employeeIds.length} Employees
           </button>
         </div>
       </div>
