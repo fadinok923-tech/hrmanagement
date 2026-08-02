@@ -706,20 +706,32 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
   open: boolean; onClose: () => void; employeeIds: string[]; onSaved: () => void;
 }) {
+  const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
   const [status, setStatus] = useState("");
   const [leaveAnnual, setLeaveAnnual] = useState("");
   const [leaveSick, setLeaveSick] = useState("");
+  const [leaveEmergency, setLeaveEmergency] = useState("");
+  const [leaveCasualPerMonth, setLeaveCasualPerMonth] = useState("");
+  const [basicSalary, setBasicSalary] = useState("");
+  const [allowances, setAllowances] = useState("");
   const [saving, setSaving] = useState(false);
 
   const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none";
 
   async function handleApply() {
     const body: Record<string, any> = {};
+    if (jobTitle) body.jobTitle = jobTitle;
     if (department) body.department = department;
+    if (employmentType) body.employmentType = employmentType;
     if (status) body.status = status;
     if (leaveAnnual) body.leaveAnnual = Number(leaveAnnual);
     if (leaveSick) body.leaveSick = Number(leaveSick);
+    if (leaveEmergency) body.leaveEmergency = Number(leaveEmergency);
+    if (leaveCasualPerMonth) body.leaveCasualPerMonth = Number(leaveCasualPerMonth);
+    if (basicSalary) body.basicSalary = Number(basicSalary);
+    if (allowances) body.allowances = Number(allowances);
 
     if (Object.keys(body).length === 0) {
       toast.error("Select at least one field to update");
@@ -744,32 +756,71 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
   }
 
   return (
-    <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${employeeIds.length} employees)`} size="md">
-      <div className="space-y-4">
-        <p className="text-xs text-slate-500">Only fields you fill in below will be updated. Leave blank to keep unchanged.</p>
-        <Field label="Department">
-          <select className={inputCls} value={department} onChange={(e) => setDepartment(e.target.value)}>
-            <option value="">— No change —</option>
-            {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </Field>
-        <Field label="Status">
-          <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">— No change —</option>
-            <option value="active">Active</option>
-            <option value="on_leave">On Leave</option>
-            <option value="terminated">Terminated</option>
-          </select>
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Annual Leave (days)">
-            <input type="number" className={inputCls} placeholder="No change" value={leaveAnnual} onChange={(e) => setLeaveAnnual(e.target.value)} />
-          </Field>
-          <Field label="Sick Leave (days)">
-            <input type="number" className={inputCls} placeholder="No change" value={leaveSick} onChange={(e) => setLeaveSick(e.target.value)} />
-          </Field>
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
+    <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${employeeIds.length} employees)`} size="lg">
+      <div className="space-y-5">
+        <p className="text-xs text-slate-500">Only fields you fill in below will be updated. Leave blank to keep each employee's existing value unchanged.</p>
+
+        <section>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Employment</h4>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Field label="Job Title">
+              <input className={inputCls} placeholder="No change" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+            </Field>
+            <Field label="Department">
+              <select className={inputCls} value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <option value="">— No change —</option>
+                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </Field>
+            <Field label="Employment Type">
+              <select className={inputCls} value={employmentType} onChange={(e) => setEmploymentType(e.target.value)}>
+                <option value="">— No change —</option>
+                <option value="full_time">Full Time</option>
+                <option value="part_time">Part Time</option>
+              </select>
+            </Field>
+            <Field label="Status">
+              <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="">— No change —</option>
+                <option value="active">Active</option>
+                <option value="on_leave">On Leave</option>
+                <option value="terminated">Terminated</option>
+              </select>
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlements</h4>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Annual Leave (days)">
+              <input type="number" className={inputCls} placeholder="No change" value={leaveAnnual} onChange={(e) => setLeaveAnnual(e.target.value)} />
+            </Field>
+            <Field label="Sick Leave (days)">
+              <input type="number" className={inputCls} placeholder="No change" value={leaveSick} onChange={(e) => setLeaveSick(e.target.value)} />
+            </Field>
+            <Field label="Emergency Leave (days)">
+              <input type="number" className={inputCls} placeholder="No change" value={leaveEmergency} onChange={(e) => setLeaveEmergency(e.target.value)} />
+            </Field>
+            <Field label="Weekend Leave (days/month)">
+              <input type="number" className={inputCls} placeholder="No change" value={leaveCasualPerMonth} onChange={(e) => setLeaveCasualPerMonth(e.target.value)} />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Financial</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Basic Salary">
+              <input type="number" className={inputCls} placeholder="No change" value={basicSalary} onChange={(e) => setBasicSalary(e.target.value)} />
+            </Field>
+            <Field label="Allowances">
+              <input type="number" className={inputCls} placeholder="No change" value={allowances} onChange={(e) => setAllowances(e.target.value)} />
+            </Field>
+          </div>
+        </section>
+
+        <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
           <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
           <button onClick={handleApply} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
