@@ -355,10 +355,10 @@ function LeaveTab({ data }: { data: any }) {
   const availableTotal = annualBalance + weekendBalance;
 
   const balances = [
-    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6", noLimit: false },
-    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981", noLimit: false },
-    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b", noLimit: false },
-    { key: "casual", label: `Weekend Leave (${weekendPerMonth}/month)`, earned: weekendEarned, used: weekendUsed, color: "#0ea5e9", noLimit: false },
+    { key: "annual", label: "Annual Leave", earned: annualEarned, used: annualUsed, color: "#3b82f6", noLimit: (data.leaveAnnual ?? 21) === 0 },
+    { key: "sick", label: "Sick Leave", earned: data.leaveSick ?? 30, used: sickUsed, color: "#10b981", noLimit: (data.leaveSick ?? 30) === 0 },
+    { key: "emergency", label: "Emergency Leave", earned: data.leaveEmergency ?? 3, used: emergencyUsed, color: "#f59e0b", noLimit: (data.leaveEmergency ?? 3) === 0 },
+    { key: "casual", label: `Weekend Leave (${weekendPerMonth}/month)`, earned: weekendEarned, used: weekendUsed, color: "#0ea5e9", noLimit: weekendPerMonth === 0 },
     { key: "unpaid", label: "Unpaid Leave", earned: 0, used: unpaidUsed, color: "#94a3b8", noLimit: true },
   ];
 
