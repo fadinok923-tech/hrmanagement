@@ -62,8 +62,8 @@ export async function GET() {
     const expiredDocs = documents.filter((d) => d.expiryDate && d.expiryDate.getTime() < now).length;
     const expiringDocs = documents.filter((d) => {
       if (!d.expiryDate) return false;
-      const days = Math.ceil((d.expiryDate.getTime() - now) / (24 * 60 * 60 * 1000));
-      return days >= 0 && days <= 30;
+      const expiry = d.expiryDate.getTime();
+      return expiry >= now && expiry <= now + 30 * 24 * 60 * 60 * 1000;
     }).length;
     const validDocs = documents.length - expiredDocs - expiringDocs;
 
