@@ -67,21 +67,21 @@ export function EmployeeDetail({ id }: { id: string }) {
           className="modal-shell absolute inset-y-0 end-0 flex w-full max-w-3xl flex-col bg-card shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-[var(--color-brand-deep)] to-[var(--color-brand-light)] px-5 py-4 text-white">
+          <div className="flex items-center justify-between border-b border-border bg-card px-6 py-6 text-foreground">
             <div className="flex min-w-0 items-center gap-3">
               {data?.profilePhoto ? (
-                <img src={data.profilePhoto} alt={data.fullName} className="h-12 w-12 rounded-full border-2 border-white/30 object-cover" />
+                <img src={data.profilePhoto} alt={data.fullName} className="h-12 w-12 rounded-full border-2 border-border object-cover" />
               ) : (
-                <div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/30 bg-white/15 text-lg font-bold">
+                <div className="grid h-12 w-12 place-items-center rounded-full border-2 border-border bg-muted text-lg font-bold">
                   {data?.fullName?.charAt(0) || "?"}
                 </div>
               )}
               <div className="min-w-0">
                 <h2 className="truncate text-lg font-bold">{data?.fullName || "…"}</h2>
-                <p className="truncate text-xs text-white/70">{data?.empNo} · {data?.jobTitle}</p>
+                <p className="truncate text-xs text-muted-foreground">{data?.empNo} · {data?.jobTitle}</p>
               </div>
             </div>
-            <button onClick={close} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/80 hover:bg-white/15 hover:text-white">
+            <button onClick={close} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -96,7 +96,7 @@ export function EmployeeDetail({ id }: { id: string }) {
                   onClick={() => setTab(tabItem.id)}
                   className={cn(
                     "inline-flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 text-xs font-medium transition-colors",
-                    tab === tabItem.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+                    tab === tabItem.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -393,7 +393,7 @@ function LeaveTab({ data }: { data: any }) {
               </div>
             );
           })}
-          <div className="mt-2 border-t border-dashed border-slate-200 pt-3">
+          <div className="mt-2 border-t border-dashed border-border pt-3">
             <div className="mb-1 flex items-center justify-between text-xs">
               <span className="font-medium text-foreground">Available Leave</span>
               <span className="font-semibold text-foreground">{availableTotal} days</span>

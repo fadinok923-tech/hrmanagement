@@ -19,7 +19,7 @@ import { ReportsPage } from "./pages/reports";
 import { Menu } from "lucide-react";
 
 export function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { page, employeeDetailId } = useDashStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -30,24 +30,24 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   }, [page]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="hr-app min-h-screen bg-background text-foreground">
       <Sidebar onLogout={onLogout} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
       <div className="lg:ps-64">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur">
           <button
             onClick={() => setMobileOpen(true)}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-border text-foreground"
+            className="grid h-9 w-9 place-items-center lg:hidden rounded-lg border border-border text-foreground"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <p className="text-sm font-semibold">{t("brand.name")}</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("brand.name")} <span className="mx-2 text-border">/</span> {locale === "ar" ? "إدارة الأفراد" : "People & Operations"}</p>
           <div className="w-9" />
         </div>
 
-        <main className="flex min-h-screen flex-col px-4 py-5 sm:px-6 sm:py-6">
+        <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[1600px] flex-col px-4 py-6 sm:px-8 sm:py-8 xl:px-10">
           <div className="flex-1">
             {page === "company" && <CompanyPage />}
             {page === "employees" && <EmployeesPage />}

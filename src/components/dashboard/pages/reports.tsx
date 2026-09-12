@@ -189,10 +189,10 @@ export function ReportsPage() {
         subtitle={t("rep.subtitle")}
         actions={
           <>
-            <button onClick={exportAllEmployees} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-muted">
+            <button onClick={exportAllEmployees} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-muted">
               <Users className="h-3.5 w-3.5" /> {t("rep.exportAllEmp")}
             </button>
-            <button onClick={exportFullReport} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background hover:bg-foreground/90">
+            <button onClick={exportFullReport} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
               <FileSpreadsheet className="h-3.5 w-3.5" /> {t("rep.exportFull")}
             </button>
           </>

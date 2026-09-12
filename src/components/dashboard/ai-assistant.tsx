@@ -78,7 +78,7 @@ export function AiAssistant() {
             className="modal-shell relative z-10 flex h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-border bg-card shadow-2xl sm:h-[75vh] sm:rounded-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-[var(--color-brand-deep)] to-[var(--color-brand-light)] px-5 py-3.5 text-white">
+            <div className="flex items-center justify-between border-b border-border bg-primary px-5 py-3.5 text-white">
               <div className="flex items-center gap-2.5">
                 <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 backdrop-blur">
                   <Sparkles className="h-4 w-4" />
@@ -109,7 +109,7 @@ export function AiAssistant() {
                   <div
                     className={
                       m.role === "user"
-                        ? "max-w-[85%] rounded-2xl rounded-ee-sm bg-gradient-to-br from-[var(--color-brand-deep)] to-[var(--color-brand-light)] px-4 py-2.5 text-sm text-white shadow-sm"
+                        ? "max-w-[85%] rounded-2xl rounded-ee-sm bg-primary px-4 py-2.5 text-sm text-white shadow-sm"
                         : "max-w-[85%] rounded-2xl rounded-ss-sm border border-border bg-muted px-4 py-2.5 text-sm text-foreground shadow-sm whitespace-pre-line"
                     }
                   >
@@ -145,7 +145,7 @@ export function AiAssistant() {
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[var(--color-brand-deep)] to-[var(--color-brand-light)] text-white shadow-sm transition disabled:opacity-50"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-sm transition disabled:opacity-50"
                 aria-label={t("ai.send")}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}

@@ -27,7 +27,7 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-slate-400">
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">
         {label}{required && <span className="text-red-500"> *</span>}
       </label>
       {children}
@@ -40,7 +40,7 @@ export function EmployeesPage() {
   const { setEmployeeDetailId } = useDashStore();
   const [list, setList] = useState<NormalEmployee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"card" | "table">("card");
+  const [view, setView] = useState<"card" | "table">("table");
   const [search, setSearch] = useState("");
   const [dept, setDept] = useState("all");
   const [status, setStatus] = useState("all");
@@ -164,7 +164,7 @@ export function EmployeesPage() {
           </div>
           <div className="min-w-0">
             <p className="truncate font-medium">{e.fullName}</p>
-            <p className="truncate text-xs text-slate-400">{e.jobTitle}</p>
+            <p className="truncate text-xs text-muted-foreground">{e.jobTitle}</p>
           </div>
         </div>
       ),
@@ -182,17 +182,17 @@ export function EmployeesPage() {
         subtitle={t("emp.subtitle")}
         actions={
           <>
-            <button onClick={() => setImportOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
+            <button onClick={() => setImportOpen(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
               <Upload className="h-3.5 w-3.5" /> {t("emp.importCsv")}
             </button>
-            <button onClick={handleExport} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
+            <button onClick={handleExport} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted">
               <Download className="h-3.5 w-3.5" /> {t("emp.exportXlsx")}
             </button>
-            <button onClick={openAdd} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-colors hover:bg-foreground/90">
+            <button onClick={openAdd} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
               <Plus className="h-3.5 w-3.5" /> {t("dash.add")}
             </button>
             {selectedIds.size > 0 && (
-              <button onClick={() => setBulkOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
+              <button onClick={() => setBulkOpen(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
                 Bulk Edit ({selectedIds.size})
               </button>
             )}
@@ -209,39 +209,39 @@ export function EmployeesPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-slate-400" />
+        <div className="relative min-w-[min(100%,16rem)] flex-1">
+          <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("dash.search.placeholder")}
-            className="tanoor-input h-9 w-full rounded-lg border border-input bg-white ps-9 pe-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            className="tanoor-input h-11 w-full rounded-lg border border-input bg-card ps-9 pe-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
-        <FilterSelect value={dept} onChange={setDept} className="w-36"
+        <FilterSelect label={t("dash.department")} value={dept} onChange={setDept} className="w-36"
           options={[{ value: "all", label: t("dash.all") }, ...DEPARTMENTS.map((d) => ({ value: d, label: d }))]} />
-        <FilterSelect value={nat} onChange={setNat} className="w-32"
+        <FilterSelect label={t("emp.nationality")} value={nat} onChange={setNat} className="w-32"
           options={[{ value: "all", label: t("dash.all") }, ...NATIONALITIES.map((n) => ({ value: n, label: n }))]} />
-        <FilterSelect value={visa} onChange={setVisa} className="w-36"
+        <FilterSelect label={t("emp.visa")} value={visa} onChange={setVisa} className="w-36"
           options={[
             { value: "all", label: t("dash.all") },
             { value: "Saudi National", label: "Saudi National" },
             { value: "COMPANY VISA", label: "Company Visa" },
             { value: "EXTERNAL VISA", label: "External Visa" },
           ]} />
-        <FilterSelect value={status} onChange={setStatus} className="w-32"
+        <FilterSelect label={t("dash.status")} value={status} onChange={setStatus} className="w-32"
           options={[
             { value: "all", label: t("dash.all") },
             { value: "active", label: t("emp.active") },
             { value: "on_leave", label: t("emp.onLeave") },
             { value: "terminated", label: "Terminated" },
           ]} />
-        <div className="flex overflow-hidden rounded-lg border border-slate-200">
-          <button onClick={() => setView("card")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "card" ? "bg-foreground text-background" : "bg-white text-slate-900 hover:bg-slate-100"}`} aria-label={t("emp.cardView")}>
+        <div className="flex overflow-hidden rounded-lg border border-border">
+          <button onClick={() => setView("card")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "card" ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted"}`} aria-label={t("emp.cardView")}>
             <Grid3x3 className="h-4 w-4" />
           </button>
-          <button onClick={() => setView("table")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "table" ? "bg-foreground text-background" : "bg-white text-slate-900 hover:bg-slate-100"}`} aria-label={t("emp.tableView")}>
+          <button onClick={() => setView("table")} className={`grid h-9 w-9 place-items-center transition-colors ${view === "table" ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted"}`} aria-label={t("emp.tableView")}>
             <List className="h-4 w-4" />
           </button>
         </div>
@@ -254,7 +254,7 @@ export function EmployeesPage() {
             <button onClick={() => setBulkOpen(true)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
               Bulk Edit
             </button>
-            <button onClick={() => setSelectedIds(new Set())} className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">
+            <button onClick={() => setSelectedIds(new Set())} className="rounded-lg border border-blue-300 bg-card px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">
               Clear
             </button>
           </div>
@@ -272,36 +272,36 @@ export function EmployeesPage() {
       ) : view === "card" ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((e) => (
-            <div key={e.id} className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-foreground/20">
+            <div key={e.id} className="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-foreground/20">
               <div className="flex items-start gap-3">
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: e.avatarColor }}>
                   {e.fullName.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-slate-900">{e.fullName}</p>
-                  <p className="truncate text-xs text-slate-400">{e.empNo} · {e.jobTitle}</p>
-                  <p className="mt-0.5 truncate text-xs text-slate-400">{e.department}</p>
+                  <p className="truncate font-semibold text-foreground">{e.fullName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{e.empNo} · {e.jobTitle}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{e.department}</p>
                 </div>
                 <StatusBadge status={e.status} />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-muted/40 p-2">
-                  <p className="text-[10px] text-slate-400">{t("emp.nationality")}</p>
-                  <p className="font-medium text-slate-900">{e.nationality}</p>
+                  <p className="text-[10px] text-muted-foreground">{t("emp.nationality")}</p>
+                  <p className="font-medium text-foreground">{e.nationality}</p>
                 </div>
                 <div className="rounded-lg bg-muted/40 p-2">
-                  <p className="text-[10px] text-slate-400">{t("emp.salary")}</p>
-                  <p className="font-medium text-slate-900">{formatSAR(e.basicSalary + e.allowances)}</p>
+                  <p className="text-[10px] text-muted-foreground">{t("emp.salary")}</p>
+                  <p className="font-medium text-foreground">{formatSAR(e.basicSalary + e.allowances)}</p>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-1">
-                <button onClick={() => setEmployeeDetailId(e.id)} className="flex-1 rounded-lg border border-slate-200 bg-background px-3 py-1.5 text-xs font-medium text-slate-900 transition-colors hover:bg-slate-100">
+                <button onClick={() => setEmployeeDetailId(e.id)} className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted">
                   {t("emp.viewDetails")}
                 </button>
-                <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-600">
+                <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-600">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -319,10 +319,10 @@ export function EmployeesPage() {
           onToggleSelectAll={toggleSelectAll}
           rowActions={(e) => (
             <>
-              <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900">
+              <button onClick={() => openEdit(e)} aria-label={t("dash.edit")} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-red-500/10 hover:text-red-600">
+              <button onClick={() => setDeleteId(e.id)} aria-label={t("dash.delete")} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-red-500/10 hover:text-red-600">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </>
@@ -482,14 +482,14 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
     }
   }
 
-  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none";
+  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none";
 
   return (
     <ModalShell open={open} onClose={onClose} title={editing ? t("emp.editEmployee") : t("emp.addEmployee")} size="xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.personal")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.personal")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.empNo")} required>
               <input className={inputCls} value={form.empNo || ""} onChange={(e) => set("empNo", e.target.value)} required />
@@ -539,7 +539,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Employment */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.employment")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.employment")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.job")} required>
               <input className={inputCls} value={form.jobTitle || ""} onChange={(e) => set("jobTitle", e.target.value)} required />
@@ -576,7 +576,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Leave Entitlements */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlements (Days/Year)</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Leave Entitlements (Days/Year)</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Annual Leave (days)">
               <input type="number" className={inputCls} value={form.leaveAnnual ?? 21} onChange={(e) => set("leaveAnnual", Number(e.target.value))} />
@@ -595,7 +595,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Legal */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.legal")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.legal")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.iqamaNo")}>
               <input className={inputCls} value={form.iqamaNo || ""} onChange={(e) => set("iqamaNo", e.target.value)} />
@@ -617,7 +617,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Financial */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.financial")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.financial")}</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label={t("emp.basicSalary")}>
               <input type="number" className={inputCls} value={form.basicSalary || 0} onChange={(e) => set("basicSalary", Number(e.target.value))} />
@@ -636,15 +636,15 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Photos */}
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">{t("emp.section.photos")}</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("emp.section.photos")}</h4>
           <div className="grid gap-3 sm:grid-cols-3">
             {(["profilePhoto", "iqamaPhoto", "passportPhoto"] as const).map((field) => (
               <div key={field}>
-                <label className="mb-1 block text-xs font-medium text-slate-400">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   {field === "profilePhoto" ? t("emp.profilePhoto") : field === "iqamaPhoto" ? t("emp.iqamaPhoto") : t("emp.passportPhoto")}
                 </label>
                 {form[field] ? (
-                  <div className="relative overflow-hidden rounded-lg border border-slate-200">
+                  <div className="relative overflow-hidden rounded-lg border border-border">
                     <img src={form[field]} alt={field} className="h-32 w-full object-cover" />
                     <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-slate-900/60 px-2 py-1.5">
                       <label className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-white hover:text-amber-300">
@@ -658,7 +658,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
                     </div>
                   </div>
                 ) : (
-                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-white text-slate-400 transition hover:border-[var(--color-brand-light)] hover:bg-slate-50">
+                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-card text-muted-foreground transition hover:border-[var(--color-brand-light)] hover:bg-muted/50">
                     <Upload className="h-5 w-5" />
                     <span className="text-xs">{t("emp.uploadPhoto")}</span>
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -686,14 +686,14 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
         {/* Notes */}
         <Field label={t("emp.notes")}>
-          <textarea rows={3} className="tanoor-input w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:outline-none" value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} />
+          <textarea rows={3} className="tanoor-input w-full rounded-lg border border-border bg-card p-3 text-sm text-foreground focus:outline-none" value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} />
         </Field>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
-          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-background px-4 text-sm font-medium text-slate-900 hover:bg-slate-100">
+        <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted">
             {t("dash.cancel")}
           </button>
-          <button type="submit" disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("dash.save")}
           </button>
@@ -718,7 +718,7 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
   const [allowances, setAllowances] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none";
+  const inputCls = "tanoor-input h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:outline-none";
 
   async function handleApply() {
     const body: Record<string, any> = {};
@@ -758,10 +758,10 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
   return (
     <ModalShell open={open} onClose={onClose} title={`Bulk Edit (${employeeIds.length} employees)`} size="lg">
       <div className="space-y-5">
-        <p className="text-xs text-slate-500">Only fields you fill in below will be updated. Leave blank to keep each employee's existing value unchanged.</p>
+        <p className="text-xs text-muted-foreground">Only fields you fill in below will be updated. Leave blank to keep each employee's existing value unchanged.</p>
 
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Employment</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Employment</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Job Title">
               <input className={inputCls} placeholder="No change" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
@@ -791,7 +791,7 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
         </section>
 
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Leave Entitlements</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Leave Entitlements</h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Annual Leave (days)">
               <input type="number" className={inputCls} placeholder="No change" value={leaveAnnual} onChange={(e) => setLeaveAnnual(e.target.value)} />
@@ -809,7 +809,7 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
         </section>
 
         <section>
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Financial</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Financial</h4>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Basic Salary">
               <input type="number" className={inputCls} placeholder="No change" value={basicSalary} onChange={(e) => setBasicSalary(e.target.value)} />
@@ -820,9 +820,9 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
           </div>
         </section>
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-          <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button onClick={handleApply} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <button onClick={onClose} className="h-10 rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted/50">Cancel</button>
+          <button onClick={handleApply} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             Apply to {employeeIds.length} Employees
           </button>
@@ -1031,11 +1031,11 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
           <div className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
             <div>
-              <p className="text-sm font-semibold text-slate-700">Download Sample Template</p>
-              <p className="text-xs text-slate-500">Excel file with all 27 columns + 2 sample rows</p>
+              <p className="text-sm font-semibold text-foreground">Download Sample Template</p>
+              <p className="text-xs text-muted-foreground">Excel file with all 27 columns + 2 sample rows</p>
             </div>
           </div>
-          <button onClick={downloadTemplate} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700">
+          <button onClick={downloadTemplate} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700">
             <Download className="h-3.5 w-3.5" /> Download
           </button>
         </div>
@@ -1064,14 +1064,14 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
             } else { toast.error("Please upload .xlsx or .xls file"); }
           }
         }}
-        className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-500 transition hover:border-blue-400 hover:bg-blue-50/30"
+        className="flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/50 text-muted-foreground transition hover:border-blue-400 hover:bg-blue-50/30"
       >
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} />
-        <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-slate-400 shadow-sm">
+        <div className="grid h-11 w-11 place-items-center rounded-full bg-card text-muted-foreground shadow-sm">
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
         </div>
         <p className="text-center text-xs">
-          {fileName ? <span className="font-semibold text-slate-700">{fileName}</span> : "Drop Excel file here or click to browse (.xlsx only)"}
+          {fileName ? <span className="font-semibold text-foreground">{fileName}</span> : "Drop Excel file here or click to browse (.xlsx only)"}
         </p>
         {parsedRows.length > 0 && (
           <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
@@ -1081,43 +1081,43 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
       </div>
 
       {parsedRows.length > 0 && (
-        <div className="mt-4 max-h-48 overflow-auto rounded-lg border border-slate-100">
+        <div className="mt-4 max-h-48 overflow-auto rounded-lg border border-border">
           <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-slate-50">
+            <thead className="sticky top-0 bg-muted/50">
               <tr>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Emp No</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Full Name</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Department</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Job Title</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Salary</th>
-                <th className="px-2 py-1.5 text-start font-semibold text-slate-500">Status</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Emp No</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Full Name</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Department</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Job Title</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Salary</th>
+                <th className="px-2 py-1.5 text-start font-semibold text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody>
               {parsedRows.slice(0, 20).map((r, i) => (
                 <tr key={i} className="border-t border-slate-50">
-                  <td className="px-2 py-1.5 text-slate-600">{r.empNo || "—"}</td>
-                  <td className="px-2 py-1.5 font-medium text-slate-800">{r.fullName || r.name || "—"}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{r.department || "—"}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{r.jobTitle || "—"}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{r.basicSalary || "—"}</td>
-                  <td className="px-2 py-1.5 text-slate-600">{r.status || "active"}</td>
+                  <td className="px-2 py-1.5 text-foreground">{r.empNo || "—"}</td>
+                  <td className="px-2 py-1.5 font-medium text-foreground">{r.fullName || r.name || "—"}</td>
+                  <td className="px-2 py-1.5 text-foreground">{r.department || "—"}</td>
+                  <td className="px-2 py-1.5 text-foreground">{r.jobTitle || "—"}</td>
+                  <td className="px-2 py-1.5 text-foreground">{r.basicSalary || "—"}</td>
+                  <td className="px-2 py-1.5 text-foreground">{r.status || "active"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {parsedRows.length > 20 && (
-            <p className="bg-slate-50 px-2 py-1 text-center text-[11px] text-slate-400">+{parsedRows.length - 20} more rows…</p>
+            <p className="bg-muted/50 px-2 py-1 text-center text-[11px] text-muted-foreground">+{parsedRows.length - 20} more rows…</p>
           )}
         </div>
       )}
 
       <div className="mt-4 flex items-center justify-end gap-2">
-        <button onClick={onClose} className="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button onClick={onClose} className="h-10 rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted/50">Cancel</button>
         <button
           onClick={handleImport}
           disabled={loading || parsedRows.length === 0}
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[var(--color-brand-deep)] px-5 text-sm font-semibold text-white shadow-md transition hover:bg-[var(--color-brand-card)] disabled:opacity-50"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-md transition hover:bg-[var(--color-brand-card)] disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           Import ({parsedRows.length})

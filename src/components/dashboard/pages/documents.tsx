@@ -92,7 +92,7 @@ export function DocumentsPage() {
         title={t("doc.title")}
         subtitle={t("doc.subtitle")}
         actions={
-          <button onClick={() => setModalOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-xs font-semibold text-background hover:bg-foreground/90">
+          <button onClick={() => setModalOpen(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
             <Plus className="h-3.5 w-3.5" /> {t("doc.add")}
           </button>
         }
@@ -125,10 +125,10 @@ export function DocumentsPage() {
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-[min(100%,16rem)] flex-1">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto h-4 w-4 text-muted-foreground" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("dash.search.placeholder")}
-            className="tanoor-input h-9 w-full rounded-lg border border-input bg-card ps-9 pe-3 text-sm focus:outline-none" />
+            className="tanoor-input h-11 w-full rounded-lg border border-input bg-card ps-9 pe-3 text-sm focus:outline-none" />
         </div>
         <FilterSelect value={type} onChange={setType} className="w-32"
           options={[{ value: "all", label: t("dash.all") }, ...TYPES.map((tp) => ({ value: tp, label: t(`doc.${tp}`) }))]} />
@@ -142,7 +142,7 @@ export function DocumentsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+        <div className="space-y-2 rounded-2xl border border-border bg-card p-5">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />)}
         </div>
       ) : list.length === 0 ? (
@@ -294,7 +294,7 @@ function AddModal({ open, onClose, employees, onSaved }: {
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="h-10 rounded-lg border border-border bg-background px-4 text-sm font-medium hover:bg-muted">{t("dash.cancel")}</button>
-          <button type="submit" disabled={saving} className="h-10 rounded-lg bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-50">{t("dash.save")}</button>
+          <button type="submit" disabled={saving} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{t("dash.save")}</button>
         </div>
       </form>
     </ModalShell>

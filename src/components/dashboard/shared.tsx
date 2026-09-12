@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export const ease = [0.22, 1, 0.36, 1] as const;
@@ -15,10 +15,10 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 pb-6 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -41,12 +41,13 @@ export function FilterSelect({
   return (
     <div className={cn("relative", className)}>
       {label && (
-        <span className="mb-1 block text-xs font-medium text-slate-400">{label}</span>
+        <span className="mb-1 block text-sm font-medium text-muted-foreground">{label}</span>
       )}
       <select
+        aria-label={label || options.find((option) => option.value === value)?.label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="tanoor-input h-9 w-full min-w-0 appearance-none rounded-lg border border-slate-200 bg-white px-3 pe-8 text-sm text-slate-900 shadow-sm transition focus:outline-none"
+        className="tanoor-input h-11 w-full min-w-0 appearance-none rounded-lg border border-border bg-card px-3 pe-8 text-sm text-foreground shadow-sm transition focus:outline-none"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -55,7 +56,7 @@ export function FilterSelect({
         ))}
       </select>
       <svg
-        className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-slate-400"
+        className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground"
         width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         style={label ? { top: "calc(50% + 9px)" } : undefined}
       >
@@ -79,13 +80,13 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
       {icon && (
-        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
           {icon}
         </div>
       )}
       <div>
-        <p className="font-semibold text-slate-900">{title}</p>
-        {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}
+        <p className="font-semibold text-foreground">{title}</p>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       {action}
     </div>
@@ -106,19 +107,19 @@ export function StatCard({
   accent?: "default" | "gold" | "green" | "red" | "blue";
 }) {
   const accents: Record<string, string> = {
-    default: "bg-slate-100 text-slate-900",
+    default: "bg-muted text-foreground",
     gold: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
     red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
     blue: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
   };
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-foreground/20">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-foreground/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-slate-400">{title}</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
-          {delta && <p className="mt-0.5 text-[11px] text-slate-400">{delta}</p>}
+          <p className="text-sm font-medium leading-relaxed text-muted-foreground">{title}</p>
+          <p className="mt-1.5 text-3xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
+          {delta && <p className="mt-0.5 text-xs text-muted-foreground">{delta}</p>}
         </div>
         {icon && (
           <div className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", accents[accent])}>
@@ -142,10 +143,10 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5", className)}>
+    <div className={cn("rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-5", className)}>
       {(title || actions) && (
         <div className="mb-4 flex items-center justify-between gap-3">
-          {title && <h3 className="text-sm font-semibold text-slate-900">{title}</h3>}
+          {title && <h3 className="text-sm font-semibold text-foreground">{title}</h3>}
           {actions}
         </div>
       )}
@@ -167,6 +168,27 @@ export function ModalShell({
   children: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeRef.current();
+      if (event.key !== "Tab") return;
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]') || []).filter((el) => el.getClientRects().length);
+      const first = items[0], last = items[items.length - 1];
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener("keydown", onKey); previous?.focus(); };
+  }, [open]);
   if (!open) return null;
   const sizes = {
     sm: "max-w-sm",
@@ -182,14 +204,14 @@ export function ModalShell({
       aria-label={title}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`modal-shell relative z-10 w-full ${sizes[size]} max-h-[90vh] overflow-hidden rounded-2xl border border-border bg-white shadow-2xl`}>
-        <div className="h-1.5 w-full bg-gradient-to-r from-[var(--color-brand-deep)] to-[var(--color-brand-light)]" />
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-          <h3 className="text-base font-bold text-slate-900">{title}</h3>
+      <div ref={dialogRef} tabIndex={-1} className={`modal-shell relative z-10 w-full ${sizes[size]} max-h-[90vh] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl`}>
+        
+        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <h3 className="text-base font-bold text-foreground">{title}</h3>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -215,14 +237,14 @@ export function StatusBadge({ status, variant }: { status: string; variant?: "de
           : ["offered"].includes(status) ? "info" : "default"
   );
   const classes: Record<string, string> = {
-    default: "bg-slate-100 text-slate-900",
+    default: "bg-muted text-foreground",
     success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
     warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     danger: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
     info: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${classes[v]}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${classes[v]}`}>
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
       {status}
     </span>

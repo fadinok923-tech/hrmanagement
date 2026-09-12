@@ -208,41 +208,60 @@ html[dir="rtl"] body {
 }
 .gold-shimmer { animation: gold-shimmer 3.2s ease-in-out infinite; }
 
-/* Input focus ring matching brand */
-.tanoor-input {
-  color: #1e293b !important;
-  background-color: #ffffff !important;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.tanoor-input::placeholder {
-  color: #94a3b8 !important;
-}
-.tanoor-input:focus {
-  border-color: var(--color-brand-light) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16) !important;
-}
 
-/* Force modal content to always be light, even in dark mode */
-.modal-shell {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
+/* Shared product surfaces and form controls */
+:root {
+  --radius: 0.875rem;
+  --background: #f5f5f7;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --primary: #006fe6;
+  --primary-foreground: #ffffff;
+  --muted: #ededf1;
+  --muted-foreground: #62626d;
+  --border: #e3e4e9;
+  --input: #e3e4e9;
+  --ring: #007aff;
+  --sidebar: #f0f1f5;
+  --sidebar-foreground: #34343c;
 }
-.modal-shell input,
-.modal-shell select,
-.modal-shell textarea {
-  color: #1e293b !important;
-  background-color: #ffffff !important;
+.dark {
+  --background: #141416;
+  --foreground: #f5f5f7;
+  --card: #202024;
+  --card-foreground: #f5f5f7;
+  --primary: #409cff;
+  --primary-foreground: #09121e;
+  --muted: #2b2b31;
+  --muted-foreground: #a6a6b2;
+  --border: #36363e;
+  --input: #36363e;
+  --sidebar: #1b1b1f;
+  --sidebar-foreground: #e7e7ec;
 }
-.modal-shell input::placeholder,
-.modal-shell textarea::placeholder {
-  color: #94a3b8 !important;
+.hr-app { -webkit-font-smoothing: antialiased; }
+.hr-app :where(button, input, select, textarea, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring); outline-offset: 3px;
 }
-.modal-shell label,
-.modal-shell span,
-.modal-shell p,
-.modal-shell div,
-.modal-shell h2,
-.modal-shell h3 {
-  color: inherit;
+.hr-app button { cursor: pointer; }
+.hr-app button:disabled { cursor: not-allowed; }
+.hr-app input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+.hr-app .tanoor-scroll { scrollbar-color: var(--border) transparent; }
+.hr-app .tanoor-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+.tanoor-input {
+  color: var(--foreground) !important;
+  background-color: var(--card) !important;
+  border-color: var(--input);
+  transition: border-color 160ms, box-shadow 160ms;
+}
+.tanoor-input::placeholder { color: var(--muted-foreground) !important; }
+.tanoor-input:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 15%, transparent); }
+.modal-shell { background-color: var(--card); color: var(--foreground); }
+.modal-shell :where(input, select, textarea) { background-color: var(--card) !important; color: var(--foreground) !important; }
+.modal-shell :where(input, textarea)::placeholder { color: var(--muted-foreground) !important; }
+.hr-app main { animation: hr-enter 180ms ease-out; }
+@keyframes hr-enter { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
