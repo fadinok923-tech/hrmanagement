@@ -10,33 +10,45 @@ import { useLanguage } from "@/components/language-provider";
 import { useDashStore } from "./dash-store";
 import { StatusBadge, EmptyState } from "./shared";
 import { ease } from "./shared";
-import { formatSAR } from "./api-helpers";
+import { formatSAR, normalizeEmployee } from "./api-helpers";
 import { cn } from "@/lib/utils";
 
 type Tab = "profile" | "employment" | "documents" | "attendance" | "leave" | "payroll" | "kpis";
 
 export function EmployeeDetail({ id }: { id: string }) {
   const { t, dir } = useLanguage();
-  const { setEmployeeDetailId } = useDashStore();
+  const { setEmployeeDetailId, employeeRevision } = useDashStore();
   const [tab, setTab] = useState<Tab>("profile");
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
+  const requestKey = `${id}:${employeeRevision}:${retry}`;
+  const [result, setResult] = useState<{ key: string; data: any; error: string | null } | null>(null);
+  const loading = result?.key !== requestKey;
+  const data = loading ? null : result?.data;
+  const error = loading ? null : result?.error;
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/employees/${id}`)
-      .then((r) => r.json())
-      .then((d) => { if (d.ok) setData(d.data); })
-      .finally(() => setLoading(false));
-  }, [id]);
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const response = await fetch(`/api/employees/${id}`, { cache: "no-store", signal: controller.signal });
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || "Unable to load employee details");
+        if (!controller.signal.aborted) setResult({ key: requestKey, data: { ...result.data, ...normalizeEmployee(result.data) }, error: null });
+      } catch (error) {
+        if (!controller.signal.aborted) setResult({ key: requestKey, data: null, error: error instanceof Error ? error.message : "Unable to load employee details" });
+      }
+    }
+    void load();
+    return () => controller.abort();
+  }, [id, requestKey]);
 
   function close() { setEmployeeDetailId(null); }
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEmployeeDetailId(null); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [setEmployeeDetailId]);
 
   const tabs: { id: Tab; label: string; icon: typeof User }[] = [
     { id: "profile", label: t("det.profile"), icon: User },
@@ -112,6 +124,11 @@ export function EmployeeDetail({ id }: { id: string }) {
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}
               </div>
+            ) : error ? (
+              <div role="alert" className="space-y-3 text-sm">
+                <p>{error}</p>
+                <button onClick={() => setRetry((value) => value + 1)} className="rounded-lg border border-border px-4 py-2">{t("dash.retry")}</button>
+              </div>
             ) : !data ? (
               <EmptyState title={t("det.noRecords")} />
             ) : (
@@ -133,7 +150,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 }
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: React.ReactNode }) {
-  if (!value || value === "—") return null;
+  if (value == null || value === "" || value === "—") return null;
   return (
     <div className="flex items-start gap-3 py-2">
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
@@ -185,7 +202,7 @@ function ProfileTab({ data }: { data: any }) {
         <div className="grid gap-2 sm:grid-cols-2">
           <InfoRow icon={User} label={t("emp.nameAr")} value={data.fullNameAr} />
           <InfoRow icon={ShieldCheck} label={t("emp.nationality")} value={data.nationality} />
-          <InfoRow icon={User} label={t("emp.gender")} value={data.gender === "male" ? t("emp.male") : t("emp.female")} />
+          <InfoRow icon={User} label={t("emp.gender")} value={data.gender === "male" ? t("emp.male") : data.gender === "female" ? t("emp.female") : data.gender} />
           <InfoRow icon={Calendar} label={t("emp.dob")} value={data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : null} />
           <InfoRow icon={BookUser} label={t("emp.marital")} value={data.maritalStatus} />
         </div>
@@ -236,8 +253,17 @@ function EmploymentTab({ data }: { data: any }) {
           <InfoRow icon={Briefcase} label={t("emp.dept")} value={data.department} />
           <InfoRow icon={BookUser} label={t("emp.employmentType")} value={data.employmentType === "full_time" ? t("emp.fullTime") : t("emp.partTime")} />
           <InfoRow icon={Calendar} label={t("emp.hireDate")} value={new Date(data.hireDate).toLocaleDateString()} />
+          <InfoRow icon={Calendar} label="Active Date (for leave accrual)" value={data.activeDate ? new Date(data.activeDate).toLocaleDateString() : null} />
           <InfoRow icon={Calendar} label={t("emp.contractEnd")} value={data.contractEnd ? new Date(data.contractEnd).toLocaleDateString() : "—"} />
           <InfoRow icon={ShieldCheck} label={t("dash.status")} value={<StatusBadge status={data.status} />} />
+        </div>
+      </Section>
+      <Section title="Leave Entitlements">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <InfoRow icon={CalendarDays} label="Annual Leave (days)" value={data.leaveAnnual} />
+          <InfoRow icon={CalendarDays} label="Sick Leave (days)" value={data.leaveSick} />
+          <InfoRow icon={CalendarDays} label="Emergency Leave (days)" value={data.leaveEmergency} />
+          <InfoRow icon={CalendarDays} label="Weekend Leave (days/month)" value={data.leaveCasualPerWeek} />
         </div>
       </Section>
       <Section title={t("det.financialInfo")}>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { normalizeVisaType } from "@/lib/employee-values";
 
 export async function GET(
   _request: Request,
@@ -21,7 +22,7 @@ export async function GET(
     if (!employee) {
       return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ ok: true, data: employee });
+    return NextResponse.json({ ok: true, data: employee }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (e) {
     console.error("[employees.GET.id]", e);
     return NextResponse.json({ ok: false, error: "Failed" }, { status: 500 });
@@ -33,7 +34,7 @@ const updateSchema = z.object({
   fullName: z.string().min(1).optional(),
   fullNameAr: z.string().optional().nullable(),
   nationality: z.string().min(1).optional(),
-  gender: z.string().optional(),
+  gender: z.string().trim().toLowerCase().optional(),
   dateOfBirth: z.string().optional().nullable(),
   maritalStatus: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
@@ -54,7 +55,7 @@ const updateSchema = z.object({
   passportExpiry: z.string().optional().nullable(),
   iqamaNo: z.string().optional().nullable(),
   iqamaExpiry: z.string().optional().nullable(),
-  visaType: z.string().optional().nullable(),
+  visaType: z.string().nullable().transform(normalizeVisaType).optional(),
   status: z.string().optional(),
   profilePhoto: z.string().optional().nullable(),
   iqamaPhoto: z.string().optional().nullable(),
@@ -92,8 +93,7 @@ export async function PUT(
         where: { empNo: d.empNo, NOT: { id } },
       });
       if (existing) {
-        // Remove empNo from update to avoid unique constraint error
-        delete data.empNo;
+        return NextResponse.json({ ok: false, error: "Employee number is already in use" }, { status: 409 });
       }
     }
 
