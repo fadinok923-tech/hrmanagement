@@ -20,6 +20,8 @@ interface DashState {
   setAiOpen: (v: boolean) => void;
   employeeDetailId: string | null;
   setEmployeeDetailId: (id: string | null) => void;
+  employeeRevision: number;
+  employeeSaved: () => void;
 }
 
 export const useDashStore = create<DashState>((set) => ({
@@ -29,4 +31,6 @@ export const useDashStore = create<DashState>((set) => ({
   setAiOpen: (v) => set({ aiOpen: v }),
   employeeDetailId: null,
   setEmployeeDetailId: (id) => set({ employeeDetailId: id }),
+  employeeRevision: 0,
+  employeeSaved: () => set((state) => ({ employeeRevision: state.employeeRevision + 1 })),
 }));

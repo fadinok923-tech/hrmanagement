@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeEmployeeChoice, normalizeVisaType } from "@/lib/employee-values";
+
 // Normalize API responses to a consistent shape for the UI.
 
 export interface NormalEmployee {
@@ -183,16 +185,16 @@ export function normalizeEmployee(e: any): NormalEmployee {
     fullName: e.fullName || "",
     fullNameAr: e.fullNameAr ?? null,
     nationality: e.nationality || "",
-    gender: e.gender || "male",
+    gender: normalizeEmployeeChoice(e.gender) || "male",
     dateOfBirth: dateOnly(e.dateOfBirth),
-    maritalStatus: e.maritalStatus ?? null,
+    maritalStatus: normalizeEmployeeChoice(e.maritalStatus),
     phone: e.phone ?? null,
     email: e.email ?? null,
     address: e.address ?? null,
     emergencyContact: e.emergencyContact ?? null,
     jobTitle: e.jobTitle || "",
     department: e.department || "",
-    employmentType: e.employmentType || "full_time",
+    employmentType: normalizeEmployeeChoice(e.employmentType) || "full_time",
     hireDate: dateOnly(e.hireDate),
     activeDate: dateOnly(e.activeDate),
     contractEnd: dateOnly(e.contractEnd),
@@ -204,17 +206,17 @@ export function normalizeEmployee(e: any): NormalEmployee {
     passportExpiry: dateOnly(e.passportExpiry),
     iqamaNo: e.iqamaNo ?? null,
     iqamaExpiry: dateOnly(e.iqamaExpiry),
-    visaType: e.visaType ?? null,
-    status: e.status || "active",
+    visaType: normalizeVisaType(e.visaType),
+    status: normalizeEmployeeChoice(e.status) || "active",
     profilePhoto: e.profilePhoto ?? null,
     iqamaPhoto: e.iqamaPhoto ?? null,
     passportPhoto: e.passportPhoto ?? null,
     avatarColor: e.avatarColor || "#1e3a8a",
     notes: e.notes ?? null,
-    leaveAnnual: Number(e.leaveAnnual) ?? 21,
-    leaveSick: Number(e.leaveSick) ?? 30,
-    leaveEmergency: Number(e.leaveEmergency) ?? 3,
-    leaveCasualPerWeek: Number(e.leaveCasualPerWeek) ?? 1,
+    leaveAnnual: Number(e.leaveAnnual ?? 21),
+    leaveSick: Number(e.leaveSick ?? 30),
+    leaveEmergency: Number(e.leaveEmergency ?? 3),
+    leaveCasualPerWeek: Number(e.leaveCasualPerWeek ?? 1),
   };
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { normalizeVisaType } from "@/lib/employee-values";
 
 export async function GET(request: Request) {
   try {
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
     if (department && department !== "all") where.department = department;
     if (status && status !== "all") where.status = status;
     if (nationality && nationality !== "all") where.nationality = nationality;
-    if (visaType && visaType !== "all") where.visaType = visaType;
+    if (visaType && visaType !== "all") where.visaType = { equals: normalizeVisaType(visaType), mode: "insensitive" };
 
     const employees = await db.employee.findMany({
       where,
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
         _count: { select: { documents: true, attendance: true, leaves: true } },
       },
     });
-    return NextResponse.json({ ok: true, data: employees });
+    return NextResponse.json({ ok: true, data: employees }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (e) {
     console.error("[employees.GET]", e);
     return NextResponse.json({ ok: false, error: "Failed to fetch employees" }, { status: 500 });
@@ -46,7 +47,7 @@ const employeeSchema = z.object({
   fullName: z.string().min(1),
   fullNameAr: z.string().optional().nullable(),
   nationality: z.string().optional().default("Saudi"),
-  gender: z.string().optional().default("male"),
+  gender: z.string().trim().toLowerCase().optional().default("male"),
   dateOfBirth: z.string().optional().nullable(),
   maritalStatus: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
@@ -67,7 +68,7 @@ const employeeSchema = z.object({
   passportExpiry: z.string().optional().nullable(),
   iqamaNo: z.string().optional().nullable(),
   iqamaExpiry: z.string().optional().nullable(),
-  visaType: z.string().optional().nullable(),
+  visaType: z.string().optional().nullable().transform(normalizeVisaType),
   status: z.string().optional().default("active"),
   profilePhoto: z.string().optional().nullable(),
   iqamaPhoto: z.string().optional().nullable(),

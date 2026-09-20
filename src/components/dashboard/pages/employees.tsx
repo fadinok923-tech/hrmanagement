@@ -16,6 +16,7 @@ import {
   type NormalEmployee,
 } from "../api-helpers";
 import { exportToExcel } from "@/lib/excel";
+import { VISA_TYPES, normalizeVisaType } from "@/lib/employee-values";
 
 const DEPARTMENTS = ["Production", "Quality Control", "Maintenance", "Logistics", "Administration", "Sales", "Finance & Accounting", "Management", "Supervisors", "Cleaning"];
 const NATIONALITIES = ["Saudi", "Indian", "Egyptian", "Pakistani", "Yemen", "Bangladeshi"];
@@ -26,18 +27,18 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 // Field component — MUST be at top level (not inside EmployeeModal) to prevent input focus loss
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-muted-foreground">
         {label}{required && <span className="text-red-500"> *</span>}
-      </label>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 
 export function EmployeesPage() {
   const { t, locale } = useLanguage();
-  const { setEmployeeDetailId } = useDashStore();
+  const { setEmployeeDetailId, employeeSaved } = useDashStore();
   const [list, setList] = useState<NormalEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"card" | "table">("table");
@@ -53,6 +54,7 @@ export function EmployeesPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  const listRequest = useRef<AbortController | null>(null);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -72,7 +74,10 @@ export function EmployeesPage() {
     });
   }
 
-  async function load() {
+  const load = useCallback(async () => {
+    listRequest.current?.abort();
+    const controller = new AbortController();
+    listRequest.current = controller;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -81,19 +86,21 @@ export function EmployeesPage() {
       if (status !== "all") params.set("status", status);
       if (nat !== "all") params.set("nationality", nat);
       if (visa !== "all") params.set("visaType", visa);
-      const res = await fetch(`/api/employees?${params}`);
+      const res = await fetch(`/api/employees?${params}`, { cache: "no-store", signal: controller.signal });
       const d = await res.json();
-      if (d.ok) setList(normalizeEmployeeList(d.data));
+      if (!res.ok || !d.ok) throw new Error(d.error || "Failed to load employees");
+      if (!controller.signal.aborted) setList(normalizeEmployeeList(d.data));
+    } catch (error) {
+      if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : "Failed to load employees");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }
+  }, [search, dept, status, nat, visa]);
 
   useEffect(() => {
     const id = setTimeout(load, 250);
-    return () => clearTimeout(id);
-     
-  }, [search, dept, status, nat, visa]);
+    return () => { clearTimeout(id); listRequest.current?.abort(); };
+  }, [load]);
 
   const stats = useMemo(() => {
     const total = list.length;
@@ -133,7 +140,15 @@ export function EmployeesPage() {
   }
 
   const handleCloseModal = useCallback(() => setModalOpen(false), []);
-  const handleSaved = useCallback(() => { setModalOpen(false); load(); }, [load]);
+  const handleSaved = useCallback((employee: NormalEmployee) => {
+    listRequest.current?.abort();
+    setList((previous) => previous.some((item) => item.id === employee.id)
+      ? previous.map((item) => item.id === employee.id ? employee : item)
+      : [employee, ...previous]);
+    employeeSaved();
+    setModalOpen(false);
+    void load();
+  }, [load, employeeSaved]);
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -226,9 +241,7 @@ export function EmployeesPage() {
         <FilterSelect label={t("emp.visa")} value={visa} onChange={setVisa} className="w-36"
           options={[
             { value: "all", label: t("dash.all") },
-            { value: "Saudi National", label: "Saudi National" },
-            { value: "COMPANY VISA", label: "Company Visa" },
-            { value: "EXTERNAL VISA", label: "External Visa" },
+            ...VISA_TYPES.map((value) => ({ value, label: value })),
           ]} />
         <FilterSelect label={t("dash.status")} value={status} onChange={setStatus} className="w-32"
           options={[
@@ -366,21 +379,11 @@ export function EmployeesPage() {
 }
 
 function EmployeeModal({ open, onClose, editing, onSaved }: {
-  open: boolean; onClose: () => void; editing: NormalEmployee | null; onSaved: () => void;
+  open: boolean; onClose: () => void; editing: NormalEmployee | null; onSaved: (employee: NormalEmployee) => void;
 }) {
   const { t } = useLanguage();
-  const [form, setForm] = useState<any>({});
-  const [saving, setSaving] = useState(false);
-  const [extractingIqama, setExtractingIqama] = useState(false);
-  const [extractingPassport, setExtractingPassport] = useState(false);
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (!open) { initialized.current = false; return; }
-    if (initialized.current) return; // Only init once when modal opens
-    initialized.current = true;
-    if (editing) setForm({ ...editing });
-    else setForm({
+  // This modal mounts for each edit; initialize before the first render.
+  const [form, setForm] = useState<any>(() => editing ? { ...editing } : {
       empNo: `TAJ-${String(Math.floor(Math.random() * 9000) + 1000)}`,
       fullName: "", fullNameAr: "", nationality: "Saudi", gender: "male",
       dateOfBirth: "", maritalStatus: "single", phone: "", email: "",
@@ -388,11 +391,13 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
       employmentType: "full_time", hireDate: todayISO(), activeDate: "", contractEnd: "",
       basicSalary: 0, allowances: 0, bankAccount: "", iban: "",
       passportNo: "", passportExpiry: "", iqamaNo: "", iqamaExpiry: "",
-      visaType: "Saudi National", status: "active", notes: "",
+      visaType: "SAUDI NATIONAL", status: "active", notes: "",
       leaveAnnual: 21, leaveSick: 30, leaveEmergency: 3, leaveCasualPerWeek: 1,
       avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     });
-  }, [open, editing]);
+  const [saving, setSaving] = useState(false);
+  const [extractingIqama, setExtractingIqama] = useState(false);
+  const [extractingPassport, setExtractingPassport] = useState(false);
 
   function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
 
@@ -442,7 +447,6 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
         }
         if (type === "iqama" && data.iqamaNo) set("iqamaNo", data.iqamaNo);
         if (type === "passport" && data.passportNo) set("passportNo", data.passportNo);
-        if (type === "passport") set("visaType", "Iqama");
         toast.success(t("emp.extracted"));
       } else {
         toast.error(t("emp.extractFailed"));
@@ -457,6 +461,7 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (saving) return;
     if (!form.fullName || !form.empNo || !form.jobTitle) {
       toast.error("Please fill required fields");
       return;
@@ -471,12 +476,14 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
         body: JSON.stringify(form),
       });
       const d = await res.json();
-      if (d.ok) {
+      if (res.ok && d.ok) {
         toast.success(editing ? t("dash.updated") : t("dash.created"));
-        onSaved();
+        onSaved(normalizeEmployee(d.data));
       } else {
         toast.error(d.error || "Failed");
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save employee");
     } finally {
       setSaving(false);
     }
@@ -610,7 +617,11 @@ function EmployeeModal({ open, onClose, editing, onSaved }: {
               <input type="date" className={inputCls} value={form.passportExpiry || ""} onChange={(e) => set("passportExpiry", e.target.value)} />
             </Field>
             <Field label={t("emp.visa")}>
-              <input className={inputCls} value={form.visaType || ""} onChange={(e) => set("visaType", e.target.value)} />
+              <select className={inputCls} value={form.visaType || ""} onChange={(e) => set("visaType", e.target.value)}>
+                <option value="" disabled>Select visa type</option>
+                {form.visaType && !VISA_TYPES.some((type) => type === form.visaType) && <option value={form.visaType} disabled>{form.visaType} (current)</option>}
+                {VISA_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+              </select>
             </Field>
           </div>
         </section>
@@ -729,7 +740,7 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
     if (leaveAnnual) body.leaveAnnual = Number(leaveAnnual);
     if (leaveSick) body.leaveSick = Number(leaveSick);
     if (leaveEmergency) body.leaveEmergency = Number(leaveEmergency);
-    if (leaveCasualPerMonth) body.leaveCasualPerMonth = Number(leaveCasualPerMonth);
+    if (leaveCasualPerMonth) body.leaveCasualPerWeek = Number(leaveCasualPerMonth);
     if (basicSalary) body.basicSalary = Number(basicSalary);
     if (allowances) body.allowances = Number(allowances);
 
@@ -747,11 +758,14 @@ function BulkEditModal({ open, onClose, employeeIds, onSaved }: {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        if (res.ok) count++;
+        const result = await res.json();
+        if (res.ok && result.ok) count++;
       } catch {}
     }
     setSaving(false);
-    toast.success(`${count} employee${count > 1 ? "s" : ""} updated`);
+    if (count) useDashStore.getState().employeeSaved();
+    if (count === employeeIds.length) toast.success(`${count} employee${count > 1 ? "s" : ""} updated`);
+    else toast.error(`${count} of ${employeeIds.length} employees updated. Please retry the failed updates.`);
     onSaved();
   }
 
@@ -875,7 +889,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         iqamaExpiry: "2025-12-31",
         passportNo: "A12345678",
         passportExpiry: "2028-06-30",
-        visaType: "Saudi National",
+        visaType: "SAUDI NATIONAL",
         status: "active",
         notes: "Reliable employee",
       },
@@ -904,7 +918,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         iqamaExpiry: "2026-03-15",
         passportNo: "P87654321",
         passportExpiry: "2029-01-20",
-        visaType: "Iqama",
+        visaType: "COMPANY VISA",
         status: "active",
         notes: "",
       },
@@ -998,7 +1012,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         iqamaExpiry: toDateStr(row.iqamaExpiry) || null,
         passportNo: String(row.passportNo || "").trim() || null,
         passportExpiry: toDateStr(row.passportExpiry) || null,
-        visaType: String(row.visaType || "").trim() || null,
+        visaType: normalizeVisaType(String(row.visaType || "")),
         notes: String(row.notes || "").trim() || null,
         leaveAnnual: row.leaveAnnual != null ? Number(row.leaveAnnual) : null,
         leaveSick: row.leaveSick != null ? Number(row.leaveSick) : null,
